@@ -1,0 +1,705 @@
+# 🎵 SUNO Prompt Generator — Complete Pipeline Wiki
+
+> **Project:** `SUNO15825` · **Stack:** Node.js + Express · **Paradigm:** Sequential 5-Stage Multi-LLM Orchestration
+
+---
+
+## Table of Contents
+
+1. [Project Purpose](#1-project-purpose)
+2. [High-Level Architecture](#2-high-level-architecture)
+3. [System Components Map](#3-system-components-map)
+4. [The 5-Stage LLM Pipeline](#4-the-5-stage-llm-pipeline)
+5. [Data Flow — Step by Step](#5-data-flow--step-by-step)
+6. [API Layer](#6-api-layer)
+7. [LLM Provider System](#7-llm-provider-system)
+8. [Last.fm Integration](#8-lastfm-integration)
+9. [Validation & Cleanup Engine](#9-validation--cleanup-engine)
+10. [Logging System](#10-logging-system)
+11. [Frontend (Public SPA)](#11-frontend-public-spa)
+12. [Configuration & Environment](#12-configuration--environment)
+13. [Error Handling & Fallback Strategy](#13-error-handling--fallback-strategy)
+14. [Cost & Performance Reference](#14-cost--performance-reference)
+
+---
+
+## 1. Project Purpose
+
+**SUNO Prompt Generator** is an AI-powered backend service that transforms a simple input — an artist name, optionally paired with a track title — into a Suno AI–compliant music generation prompt.
+
+**The core problem it solves:** Suno AI prohibits prompts that mention real artist names or song titles. Simply asking an LLM "generate a prompt for Daft Punk" would violate those terms. The system instead extracts the *musical DNA* of an artist/track — genre, BPM, instrumentation, mood, production style — and assembles a 400-character max, artist-anonymous prompt ready for direct use.
+
+**Two input modes:**
+| Mode | Description |
+|---|---|
+| **Manual** | User types artist name + optional track title directly |
+| **Last.fm** | User enters a Last.fm username → the system fetches recent listening history → user selects a track |
+
+---
+
+## 2. High-Level Architecture
+
+```mermaid
+flowchart TD
+    Browser["🌐 Browser (SPA)\n/public/index.html"]
+    
+    subgraph Server["🖥️ Express Server · server.js · :3000"]
+        MW["Middleware Stack\nhelmet · cors · morgan · json parser"]
+        R_H["GET /api/health"]
+        R_L["GET /api/lastfm/:user"]
+        R_G["POST /api/generate\nGET /api/generate/status\nPOST /api/generate/test-stage"]
+    end
+
+    subgraph Pipeline["🔄 5-Stage LLM Pipeline (prompt-pipeline.js)"]
+        S1["Stage 1 · Analysis\n🤖 Google Gemini 1.5 Flash"]
+        S2["Stage 2 · Refinement\n🎯 Mistral Medium"]
+        S3["Stage 3 · Enhancement\n🎨 DeepSeek Chat"]
+        S4["Stage 4 · Quality Control\n✨ Claude 3 Haiku"]
+        S5["Stage 5 · Finalization\n🎼 GPT-4o Mini"]
+    end
+
+    subgraph Services["🛠️ Services & Utils"]
+        LLMmgr["LLM Provider Manager\nllm-providers.js"]
+        LFM["Last.fm Service\nservices/lastfm.js"]
+        VAL["Prompt Validator\nutils/prompt-validator.js"]
+        LOG["Logger\nutils/logger.js"]
+    end
+
+    subgraph External["☁️ External APIs"]
+        GOOG["Google AI Studio\ngenerativelanguage.googleapis.com"]
+        MIST["Mistral AI\napi.mistral.ai"]
+        DEEP["DeepSeek\napi.deepseek.com"]
+        ANTH["Anthropic\napi.anthropic.com"]
+        OPENAI["OpenAI\napi.openai.com"]
+        PERP["Perplexity\napi.perplexity.ai"]
+        LASTFM_API["Last.fm API\nws.audioscrobbler.com"]
+    end
+
+    Browser -->|HTTP| Server
+    Server --> Pipeline
+    Server --> LFM
+    Pipeline --> LLMmgr
+    Pipeline --> LOG
+    R_G --> VAL
+    LLMmgr --> GOOG
+    LLMmgr --> MIST
+    LLMmgr --> DEEP
+    LLMmgr --> ANTH
+    LLMmgr --> OPENAI
+    LLMmgr --> PERP
+    LFM --> LASTFM_API
+```
+
+---
+
+## 3. System Components Map
+
+| Layer | File | Role |
+|---|---|---|
+| **Entry Point** | `server.js` | Express bootstrap, middleware, route registration |
+| **Routes** | `routes/health.js` | System health & API key status |
+| **Routes** | `routes/lastfm.js` | Last.fm proxy: recent tracks, artist info, track info |
+| **Routes** | `routes/generate.js` | Pipeline orchestration endpoint (POST + GET status + test-stage) |
+| **Core Logic** | `pipeline/prompt-pipeline.js` | Sequential 5-stage pipeline controller |
+| **Service** | `services/llm-providers.js` | 6 LLM provider classes + manager factory |
+| **Service** | `services/lastfm.js` | Last.fm API client with normalization |
+| **Utility** | `utils/prompt-validator.js` | Suno constraint validation + auto-clean + truncation |
+| **Utility** | `utils/logger.js` | Structured console + optional file logging |
+| **Frontend** | `public/index.html` | HTML shell of the SPA |
+| **Frontend** | `public/app.js` | Vanilla JS client (27KB – full UI logic) |
+| **Frontend** | `public/style.css` | UI styles (39KB) |
+| **Analyzer** | `suno-analyzer/` | Separate analytical dashboard (charts, diagrams) |
+
+---
+
+## 4. The 5-Stage LLM Pipeline
+
+This is the heart of the project. The pipeline runs **sequentially** — each stage consumes the output of the previous one. Every stage has a designated primary LLM and a fallback LLM that activates automatically on failure.
+
+```mermaid
+flowchart LR
+    IN(["🎤 INPUT\nartist + title?"])
+
+    subgraph S1["Stage 1 · Analysis"]
+        direction TB
+        P1["Primary: Google\nGemini 1.5 Flash"]
+        F1["Fallback: Mistral Medium"]
+        OPT1["temp=0.7 · max=1500t"]
+    end
+
+    subgraph S2["Stage 2 · Refinement"]
+        direction TB
+        P2["Primary: Mistral Medium"]
+        F2["Fallback: Google Gemini"]
+        OPT2["temp=0.5 · max=1200t"]
+    end
+
+    subgraph S3["Stage 3 · Enhancement"]
+        direction TB
+        P3["Primary: DeepSeek Chat"]
+        F3["Fallback: Claude 3 Haiku"]
+        OPT3["temp=0.8 · max=1200t"]
+    end
+
+    subgraph S4["Stage 4 · Quality Control"]
+        direction TB
+        P4["Primary: Claude 3 Haiku"]
+        F4["Fallback: GPT-4o Mini"]
+        OPT4["temp=0.4 · max=1000t"]
+    end
+
+    subgraph S5["Stage 5 · Finalization"]
+        direction TB
+        P5["Primary: GPT-4o Mini"]
+        F5["Fallback: Claude 3 Haiku"]
+        OPT5["temp=0.3 · max=500t"]
+    end
+
+    VAL(["✅ Validator\n&lt;400 chars · no names\nEnglish · clean"])
+    OUT(["🎼 OUTPUT\nSuno-ready prompt"])
+
+    IN --> S1 --> S2 --> S3 --> S4 --> S5 --> VAL --> OUT
+```
+
+### Stage-by-Stage Detail
+
+---
+
+#### 🟦 Stage 1 — Analysis
+**Provider:** Google Gemini 1.5 Flash → *fallback:* Mistral Medium  
+**Temperature:** 0.7 · **Max Tokens:** 1500  
+**Input:** Raw `{artist, title?}` from user  
+**Goal:** Generate a detailed musical DNA analysis of the artist/track.
+
+Two prompt modes:
+- **Artist + Title:** Analyzes the specific song — genre, subgenre, rhythm, melody, harmony, instrumentation, production style, BPM, vocal style, emotional tone.
+- **Artist Only:** Analyzes the artist's entire catalog — primary genres, evolution, signature elements, production characteristics, BPM ranges, innovations.
+
+> **Critical rule:** The analysis must never mention the artist name or song title.
+
+**Output:** ~1000–1500 token free-form musical analysis in prose.
+
+---
+
+#### 🟩 Stage 2 — Refinement
+**Provider:** Mistral Medium → *fallback:* Google Gemini  
+**Temperature:** 0.5 · **Max Tokens:** 1200  
+**Input:** Stage 1 prose analysis  
+**Goal:** Structure the analysis into 6 technical categories.
+
+Forced output structure:
+```
+1. GENRE & STYLE
+2. RHYTHM & TEMPO
+3. INSTRUMENTATION
+4. PRODUCTION
+5. HARMONIC STRUCTURE
+6. MELODIC ELEMENTS
+```
+
+Lower temperature (0.5) makes this stage more deterministic and structured.  
+**Output:** Organized, technical, category-tagged musical description.
+
+---
+
+#### 🟧 Stage 3 — Enhancement
+**Provider:** DeepSeek Chat → *fallback:* Claude 3 Haiku  
+**Temperature:** 0.8 · **Max Tokens:** 1200  
+**Input:** Stage 2 structured categories  
+**Goal:** Add creative, evocative, AI-generator-friendly language.
+
+Operations:
+- Atmospheric and emotional descriptors
+- Textural and sonic imagery vocabulary
+- Production terminology AI generators respond well to
+- Dynamic and energy-level descriptions
+
+Higher temperature (0.8) maximizes creativity.  
+**Output:** Vibrant, expressive, paint-a-sonic-picture description.
+
+---
+
+#### 🟥 Stage 4 — Quality Control
+**Provider:** Claude 3 Haiku → *fallback:* GPT-4o Mini  
+**Temperature:** 0.4 · **Max Tokens:** 1000  
+**Input:** Stage 3 enhanced description  
+**Goal:** Polish, prune, verify technical accuracy.
+
+QC checklist applied:
+- Eliminate redundancy
+- Verify BPM realism
+- Confirm genre accuracy
+- Check instrumentation clarity
+- Ensure logical flow
+- Remove ambiguity
+
+Lower temperature (0.4) for precise, editorial behavior.  
+**Output:** Clean, professional, accurate musical description.
+
+---
+
+#### 🟪 Stage 5 — Finalization
+**Provider:** GPT-4o Mini → *fallback:* Claude 3 Haiku  
+**Temperature:** 0.3 · **Max Tokens:** 500  
+**Input:** Stage 4 polished description  
+**Goal:** Compress everything into a ≤400 char Suno AI prompt.
+
+Hard constraints injected into the prompt:
+```
+- Maximum 400 characters including spaces
+- NO artist names or song titles
+- English language only
+- Focus on arrangement, style, BPM, musical elements
+- Return ONLY the final prompt, nothing else
+```
+
+Lowest temperature (0.3) for maximum constraint compliance.  
+**Output:** The raw final prompt string (≤400 chars, ready for Suno).
+
+---
+
+## 5. Data Flow — Step by Step
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant SPA as Browser SPA
+    participant API as /api/generate
+    participant PP as PromptPipeline
+    participant LLM as LLMProviderManager
+    participant VAL as PromptValidator
+    participant LOG as Logger
+
+    User->>SPA: Enter artist [+ title] → click Generate
+    SPA->>API: POST {artist, title}
+    API->>API: Validate input (artist required)
+    API->>PP: validatePipeline()
+    PP-->>API: {ready, missing[], available[]}
+    
+    alt Pipeline not ready
+        API-->>SPA: 503 + missing providers list
+    end
+
+    API->>LOG: logPipelineStart()
+    API->>PP: processInput(artist, title)
+
+    loop Stages 1–5
+        PP->>LLM: makeRequest(provider, prompt, options)
+        alt Primary succeeds
+            LLM-->>PP: response text
+        else Primary fails
+            PP->>LOG: logStageError()
+            PP->>LOG: logFallbackUsed()
+            PP->>LLM: makeRequest(fallback, prompt, options)
+            LLM-->>PP: response text
+        end
+        PP->>LOG: logStageSuccess()
+    end
+
+    PP-->>API: results {stages[], finalPrompt}
+    API->>VAL: validatePrompt(finalPrompt, artist, title)
+    
+    alt Validation fails
+        API->>VAL: cleanPrompt() → truncateIntelligently()
+        VAL-->>API: cleaned prompt
+        API->>VAL: validatePrompt() again
+    end
+
+    API->>LOG: logPipelineComplete() + logValidationResult()
+    API-->>SPA: Full JSON response (pipeline stages + final prompt + validation)
+    SPA->>User: Display prompt + stage-by-stage breakdown
+```
+
+---
+
+## 6. API Layer
+
+### `GET /api/health`
+Returns live system status. Checks presence of all 7 API keys.
+
+```json
+{
+  "status": "OK | DEGRADED",
+  "uptime": 123.4,
+  "memory": {...},
+  "api_keys": {
+    "lastfm": true,
+    "google": true,
+    "mistral": false,
+    ...
+  },
+  "missing_apis": ["mistral"]
+}
+```
+
+Status is `DEGRADED` if any of the 4 required keys (lastfm, google, anthropic, openai) are missing.
+
+---
+
+### `GET /api/lastfm/:username?limit=10`
+Fetches a user's recent Last.fm tracks.  
+Returns an array of normalized track objects:
+```json
+{
+  "username": "nightbeats",
+  "tracks": [
+    { "artist": "...", "title": "...", "album": "...", "playedAt": "...", "url": "...", "image": "..." }
+  ],
+  "count": 10
+}
+```
+
+Additional endpoints:
+- `GET /api/lastfm/artist/:artistName` — Returns bio, tags, listeners, playcount
+- `GET /api/lastfm/track/:artistName/:trackName` — Returns duration, tags, wiki, playcount
+
+---
+
+### `POST /api/generate`
+The main pipeline trigger.
+
+**Request:**
+```json
+{ "artist": "Daft Punk", "title": "One More Time" }
+```
+
+**Response (success):**
+```json
+{
+  "success": true,
+  "input": { "artist": "...", "title": "...", "mode": "artist_and_song" },
+  "pipeline": {
+    "stages": [
+      { "stage": 1, "name": "analysis", "provider": "google", "processingTime": 1240, "success": true, "input": "...", "output": "..." },
+      ...
+    ],
+    "totalProcessingTime": 18340,
+    "stagesCompleted": 5,
+    "errors": []
+  },
+  "result": {
+    "prompt": "Energetic house track with filtered disco samples, four-on-floor beat, 123 BPM...",
+    "characterCount": 198,
+    "validation": { "valid": true, "errors": [], "warnings": [...], "suggestions": [...] }
+  }
+}
+```
+
+---
+
+### `GET /api/generate/status`
+Shows pipeline configuration and which providers are available/missing.
+
+### `POST /api/generate/test-stage`
+Allows isolated testing of any single pipeline stage (0–4) with arbitrary input. Useful for debugging.
+
+---
+
+## 7. LLM Provider System
+
+The `LLMProviderManager` implements a **class hierarchy** pattern:
+
+```mermaid
+classDiagram
+    class LLMProvider {
+        +name: string
+        +config: object
+        +makeRequest(prompt, options)*
+        +isConfigured(): bool
+    }
+
+    class GoogleProvider {
+        +model: gemini-1.5-flash
+        +makeRequest()
+    }
+    class MistralProvider {
+        +model: mistral-medium
+        +makeRequest()
+    }
+    class DeepSeekProvider {
+        +model: deepseek-chat
+        +makeRequest()
+    }
+    class AnthropicProvider {
+        +model: claude-3-haiku-20240307
+        +makeRequest()
+    }
+    class OpenAIProvider {
+        +model: gpt-4o-mini
+        +makeRequest()
+    }
+    class PerplexityProvider {
+        +model: llama-3.1-sonar-small-128k-online
+        +makeRequest()
+    }
+
+    class LLMProviderManager {
+        +providers: Map
+        +getProvider(name)
+        +getAvailableProviders()
+        +getAllProviders()
+        +makeRequest(name, prompt, options)
+    }
+
+    LLMProvider <|-- GoogleProvider
+    LLMProvider <|-- MistralProvider
+    LLMProvider <|-- DeepSeekProvider
+    LLMProvider <|-- AnthropicProvider
+    LLMProvider <|-- OpenAIProvider
+    LLMProvider <|-- PerplexityProvider
+    LLMProviderManager o-- GoogleProvider
+    LLMProviderManager o-- MistralProvider
+    LLMProviderManager o-- DeepSeekProvider
+    LLMProviderManager o-- AnthropicProvider
+    LLMProviderManager o-- OpenAIProvider
+    LLMProviderManager o-- PerplexityProvider
+```
+
+> **Note:** `PerplexityProvider` is registered in the manager but **not used in any pipeline stage**. It is available for future use or direct API calls.
+
+Each provider normalizes its response to a plain `string`, handling the different response shapes of each API (Google uses `.candidates[0].content.parts[0].text`, OpenAI/Mistral/DeepSeek use `.choices[0].message.content`, Anthropic uses `.content[0].text`).
+
+All requests use a **60-second timeout** via axios.
+
+---
+
+## 8. Last.fm Integration
+
+The `LastFmService` (`services/lastfm.js`) connects to the Last.fm REST API at `http://ws.audioscrobbler.com/2.0/`.
+
+### Methods
+
+| Method | Last.fm API Call | Purpose |
+|---|---|---|
+| `getUserRecentTracks(username, limit)` | `user.getrecenttracks` | Get listening history (up to 50) |
+| `getArtistInfo(artistName)` | `artist.getinfo` | Bio, tags, listeners, playcount |
+| `getTrackInfo(artistName, trackName)` | `track.getinfo` | Duration, tags, wiki, playcount |
+
+### Normalization
+- Filters out the "now playing" track (which has no timestamp)
+- Handles Last.fm's inconsistent response shape (single track = object, multiple = array)
+- Extracts the "large" image from the image array
+- Converts Unix timestamps to `Date` objects
+
+> `getArtistInfo` and `getTrackInfo` are **non-critical** — failures return `null` and are logged as warnings (not thrown), so a Last.fm metadata hiccup never blocks the main pipeline.
+
+---
+
+## 9. Validation & Cleanup Engine
+
+`PromptValidator` (`utils/prompt-validator.js`) enforces **Suno AI's content policy** on every generated prompt.
+
+### Validation Checks (in order)
+
+```mermaid
+flowchart TD
+    A["Input: finalPrompt + artist + title"] --> B{"> 400 chars?"}
+    B -->|Yes| ERR1["❌ error: length_exceeded"]
+    B -->|No| C{Contains artist name?}
+    C -->|Yes| ERR2["❌ error: artist_name_detected"]
+    C -->|No| D{Contains song title?}
+    D -->|Yes| ERR3["❌ error: song_title_detected"]
+    D -->|No| E{Is English?}
+    E -->|No| ERR4["❌ error: non_english_content"]
+    E -->|Yes| F{Banned patterns?}
+    F -->|Match| WARN1["⚠️ warning: suspicious_pattern"]
+    F --> G{Required elements present?}
+    G -->|Missing| WARN2["⚠️ warning: missing_elements\ngenre · tempo · instrument · mood"]
+    G --> SUGG["💡 Generate suggestions"]
+    SUGG --> OUT["Return ValidationResult"]
+```
+
+### Auto-Cleanup Sequence (in `routes/generate.js`)
+
+If validation fails, the route automatically attempts repair **before returning an error**:
+
+1. `cleanPrompt()` — strips artist/title word fragments using regex
+2. `truncateIntelligently()` — cuts at sentence boundaries first, then word boundaries, appending `...`
+3. `validatePrompt()` again — re-runs full validation on the cleaned version
+
+### Required Elements Check
+
+The validator checks for the presence of at least one term from each category:
+
+| Element | Example keywords detected |
+|---|---|
+| **Genre** | rock, pop, jazz, electronic, hip-hop, house, techno, ambient, dubstep… |
+| **Tempo** | BPM values, slow, fast, upbeat, downtempo, allegro, andante… |
+| **Instrument** | guitar, piano, drums, bass, synthesizer, vocals, strings… |
+| **Mood** | happy, energetic, dark, melancholic, dreamy, intense… |
+
+Missing elements generate **warnings** (not errors) with improvement suggestions.
+
+---
+
+## 10. Logging System
+
+`Logger` (`utils/logger.js`) provides structured lifecycle logging.
+
+### Log Events
+
+| Event | Emoji | Method |
+|---|---|---|
+| Pipeline started | 🎵 | `logPipelineStart(artist, title)` |
+| Stage starting | 🔄 | `logStageStart(num, name, provider)` |
+| Stage succeeded | ✅ | `logStageSuccess(num, name, provider, output, ms)` |
+| Stage errored | ❌ | `logStageError(num, name, provider, error)` |
+| Fallback activated | 🔄 | `logFallbackUsed(num, primary, fallback)` |
+| Pipeline finished | ✨ | `logPipelineComplete(totalMs, completed, chars)` |
+| Validation result | 🔍 | `logValidationResult(valid, errors, warnings)` |
+| HTTP request | 📡 | `logApiRequest(endpoint, method, status, ms)` |
+
+### Output Modes
+
+- **Console** — always active, with emoji-prefixed messages
+- **File** (`./logs/pipeline.log`) — activated by `LOG_TO_FILE=true` in `.env`; auto-creates the `logs/` directory; format: `ISO_TIMESTAMP [LEVEL] message | Data: {...}`
+
+---
+
+## 11. Frontend (Public SPA)
+
+Located at `public/` — vanilla HTML/CSS/JS with no framework dependency.
+
+| File | Size | Role |
+|---|---|---|
+| `index.html` | 16KB | HTML structure, tab UI, stage visualization |
+| `app.js` | 27KB | Full UI logic — fetch calls, DOM updates, real-time stage display |
+| `style.css` | 39KB | Complete design system |
+
+**UI Features:**
+- Dual tab interface: **Manual Input** / **Last.fm**
+- Real-time pipeline stage visualization as each LLM completes
+- Character counter for the final prompt
+- Copy-to-clipboard for the generated prompt
+- Validation warnings/suggestions displayed inline
+- Responsive design
+
+The `suno-analyzer/` subdirectory contains a **separate standalone dashboard** with pre-generated charts:
+- `architecture_diagram.png` — static pipeline diagram
+- `llm_radar_chart.png` — comparative LLM capabilities radar chart
+- `suno_flow_diagram.png` — Suno flow visualization
+- `suno_processing_example.csv` — example processing data
+
+---
+
+## 12. Configuration & Environment
+
+```mermaid
+block-beta
+    columns 3
+    block:required:2
+        A["LASTFM_API_KEY\n🔴 Required\nStage: Last.fm data"]
+        B["GOOGLE_API_KEY\n🔴 Required\nStage 1: Analysis"]
+        C["ANTHROPIC_API_KEY\n🔴 Required\nStage 4: Quality"]
+        D["OPENAI_API_KEY\n🔴 Required\nStage 5: Final"]
+    end
+    block:optional:1
+        E["MISTRAL_API_KEY\n🟡 Optional\nStage 2 + S1 fallback"]
+        F["DEEPSEEK_API_KEY\n🟡 Optional\nStage 3: Enhancement"]
+        G["PERPLEXITY_API_KEY\n🟡 Optional\nReserved / future"]
+    end
+```
+
+### Server Settings
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `3000` | HTTP listen port |
+| `NODE_ENV` | `development` | Affects error detail in responses |
+| `MAX_REQUESTS_PER_MINUTE` | `60` | Rate limit (config only, not enforced in code yet) |
+| `PIPELINE_TIMEOUT_MS` | `180000` | 3-minute max per request |
+| `LOG_TO_FILE` | `false` | Enable file logging |
+| `LOG_LEVEL` | `info` | Log verbosity |
+
+---
+
+## 13. Error Handling & Fallback Strategy
+
+The pipeline uses a **two-tier resilience model** at every stage:
+
+```mermaid
+flowchart TD
+    TRY["Try Primary Provider"] --> OK{Success?}
+    OK -->|Yes| NEXT["Pass output to next stage"]
+    OK -->|No| LOG_ERR["Log error (logStageError)"]
+    LOG_ERR --> HASFB{Has fallback?}
+    HASFB -->|No| THROW["Throw: Stage N failed"]
+    HASFB -->|Yes| LOG_FB["Log fallback activation"]
+    LOG_FB --> TRY_FB["Try Fallback Provider"]
+    TRY_FB --> OK2{Success?}
+    OK2 -->|Yes| NEXT
+    OK2 -->|No| THROW2["Throw original primary error"]
+```
+
+**Fallback matrix:**
+
+| Stage | Primary | Fallback |
+|---|---|---|
+| 1 · Analysis | Google | Mistral |
+| 2 · Refinement | Mistral | Google |
+| 3 · Enhancement | DeepSeek | Anthropic |
+| 4 · Quality | Anthropic | OpenAI |
+| 5 · Finalization | OpenAI | Anthropic |
+
+Note: DeepSeek and Mistral are strictly optional (`🟡`), so if Stage 2 or 3 fail and their fallbacks also fail, the whole pipeline throws. For maximum reliability, all 6 providers should be configured.
+
+At the HTTP layer, `routes/generate.js` wraps everything in a try/catch and returns structured 500 responses with `error.stack` in dev mode only.
+
+---
+
+## 14. Cost & Performance Reference
+
+### Estimated Costs per 1000 Requests
+
+| Provider | Estimated Cost | Stage Used |
+|---|---|---|
+| Google Gemini 1.5 Flash | ~$0.50–1.00 | Stage 1 |
+| Mistral Medium | ~$0.50–1.00 | Stage 2 |
+| DeepSeek Chat | ~$0.10–0.50 | Stage 3 |
+| Claude 3 Haiku | ~$1.00–2.00 | Stage 4 |
+| GPT-4o Mini | ~$2.00–5.00 | Stage 5 |
+| **Total (5 stages)** | **~$4.10–9.50** | — |
+
+### Performance Characteristics
+
+- Each external LLM call has a **60-second timeout**
+- A full 5-stage run typically takes **15–60 seconds** depending on provider latency
+- The `PIPELINE_TIMEOUT_MS=180000` (3 min) sets the upper bound
+- No caching is implemented — every request makes 5 fresh LLM calls
+- Recommendation for production: add Redis caching keyed on `{artist, title}`
+
+> **Bottleneck:** Stage 1 (Google Gemini) and Stage 4 (Anthropic) tend to be slowest due to their larger output token budgets.
+
+---
+
+## Example End-to-End Output
+
+**Input:**
+```json
+{ "artist": "Daft Punk", "title": "One More Time" }
+```
+
+**Stage 1 Output (Analysis):** ~800 words of musical analysis — filtered French house characteristics, Roland TR-909 drums, vocoder treatment, four-on-the-floor beat, disco sample manipulation, etc.
+
+**Stage 2 Output (Refinement):**
+```
+GENRE & STYLE: French house, nu-disco, electronic dance
+RHYTHM & TEMPO: 122-124 BPM, four-on-floor kick pattern...
+INSTRUMENTATION: Filtered disco samples, Roland TR-909...
+...
+```
+
+**Stage 3 Output (Enhancement):**
+> *"A shimmering wall of filtered disco euphoria, four-on-floor kick punching through a warm analog haze..."*
+
+**Stage 4 Output (Quality):** Trimmed, verified, professionally structured.
+
+**Stage 5 Output (Final Prompt):**
+> *"Energetic house track with filtered disco samples, four-on-floor beat, 123 BPM, vocoder vocals, funky bassline, uplifting chord progressions, electronic dance production"*
+
+**Character count:** 176 / 400 ✅  
+**Validation:** passed · no artist names · English only
+
+---
+
+*Generated by Antigravity — SUNO15825 Pipeline Wiki — 2026-04-27*

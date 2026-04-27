@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNO Prompt Generator - Analisi Interattiva</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="header__title">SUNO Prompt Generator - Analisi Interattiva</h1>
+            <nav class="nav">
+                <button class="nav__btn nav__btn--active" data-section="overview">Overview</button>
+                <button class="nav__btn" data-section="pipeline">Pipeline</button>
+                <button class="nav__btn" data-section="providers">Providers</button>
+                <button class="nav__btn" data-section="demo">Demo</button>
+                <button class="nav__btn" data-section="architecture">Architecture</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Overview Section -->
+        <section id="overview" class="section section--active">
+            <div class="container">
+                <div class="hero">
+                    <h2>Sistema AI per la Generazione di Prompt Musicali</h2>
+                    <p class="hero__subtitle">Pipeline intelligente a 5 stadi che utilizza diversi provider LLM per creare prompt ottimizzati per Suno AI</p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-card__value">5</div>
+                        <div class="stat-card__label">Stadi Pipeline</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card__value">6</div>
+                        <div class="stat-card__label">Provider API</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card__value">2</div>
+                        <div class="stat-card__label">Modalità Input</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card__value">&lt;400</div>
+                        <div class="stat-card__label">Caratteri Max</div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Doppia Modalità Input</h3>
+                        <p>Inserisci manualmente artista e canzone oppure utilizza l'integrazione Last.fm per recuperare automaticamente la tua ultima canzone ascoltata</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Pipeline LLM Multi-Stadio</h3>
+                        <p>Processo a 5 fasi che sfrutta le competenze specifiche di diversi modelli AI per garantire qualità ottimale</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Validazione Intelligente</h3>
+                        <p>Controllo automatico delle restrizioni Suno AI: limiti caratteri, conformità linguistica e rimozione riferimenti diretti</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Visualizzazione Real-time</h3>
+                        <p>Interfaccia interattiva che mostra il progresso in tempo reale attraverso ogni stadio della pipeline</p>
+                    </div>
+                </div>
+
+                <div class="benefits">
+                    <h3>Benefici e Casi d'Uso</h3>
+                    <ul>
+                        <li><strong>Musicisti:</strong> Generazione rapida di prompt per ispirazioni creative</li>
+                        <li><strong>Produttori:</strong> Descrizioni tecniche precise per progetti musicali</li>
+                        <li><strong>Content Creator:</strong> Prompt ottimizzati per video e contenuti social</li>
+                        <li><strong>Educator:</strong> Strumento didattico per comprendere l'analisi musicale AI</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pipeline Section -->
+        <section id="pipeline" class="section">
+            <div class="container">
+                <h2>Pipeline a 5 Stadi</h2>
+                <p class="section__subtitle">Ogni stadio utilizza un provider LLM specializzato per ottimizzare aspetti specifici della generazione del prompt</p>
+                
+                <div class="pipeline-diagram">
+                    <img src="https://ppl-ai-code-interpreter-files.s3.amazonaws.com/web/direct-files/fe86f96cae19758e41ecf4596850b67e/5fc920b7-dcdf-423d-935c-432e8b444a93/0bc00fd2.png" alt="Diagramma Pipeline SUNO" class="pipeline-image">
+                </div>
+
+                <div class="pipeline-controls">
+                    <button class="btn btn--primary" id="simulatePipeline">Simula Pipeline</button>
+                    <div class="pipeline-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">Pronto per iniziare</span>
+                    </div>
+                </div>
+
+                <div class="stages-grid">
+                    <div class="stage-card" data-stage="1">
+                        <div class="stage-card__header">
+                            <div class="stage-number">1</div>
+                            <div>
+                                <h4>Deep Analysis</h4>
+                                <p class="provider">Google/Mistral</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Compito:</strong> Analisi approfondita delle caratteristiche musicali</p>
+                            <p><strong>Input:</strong> The Beatles - Yesterday</p>
+                            <p><strong>Output:</strong> Ballata pop britannica del 1965, arrangiamenti orchestrali...</p>
+                            <p><strong>Tempo:</strong> 2-3s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="2">
+                        <div class="stage-card__header">
+                            <div class="stage-number">2</div>
+                            <div>
+                                <h4>Technical Refinement</h4>
+                                <p class="provider">Mistral</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Compito:</strong> Raffinamento parametri tecnici musicali</p>
+                            <p><strong>Input:</strong> Dati analisi Beatles</p>
+                            <p><strong>Output:</strong> 90 BPM, tonalità C major, progressioni armoniche...</p>
+                            <p><strong>Tempo:</strong> 1-2s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="3">
+                        <div class="stage-card__header">
+                            <div class="stage-number">3</div>
+                            <div>
+                                <h4>Creative Enhancement</h4>
+                                <p class="provider">DeepSeek</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Compito:</strong> Miglioramento aspetti creativi e atmosferici</p>
+                            <p><strong>Input:</strong> Specifiche tecniche + contesto musicale</p>
+                            <p><strong>Output:</strong> Strings orchestrali, voce espressiva, atmosfera nostalgica...</p>
+                            <p><strong>Tempo:</strong> 2-3s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="4">
+                        <div class="stage-card__header">
+                            <div class="stage-number">4</div>
+                            <div>
+                                <h4>Quality Control</h4>
+                                <p class="provider">Anthropic</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Compito:</strong> Verifica conformità restrizioni Suno AI</p>
+                            <p><strong>Input:</strong> Prompt creativo migliorato</p>
+                            <p><strong>Output:</strong> Prompt validato: no nomi artisti, &lt;400 caratteri...</p>
+                            <p><strong>Tempo:</strong> 1s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="5">
+                        <div class="stage-card__header">
+                            <div class="stage-number">5</div>
+                            <div>
+                                <h4>Final Generation</h4>
+                                <p class="provider">OpenAI</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Compito:</strong> Generazione prompt finale ottimizzato</p>
+                            <p><strong>Input:</strong> Elementi prompt validati</p>
+                            <p><strong>Output:</strong> Melodic orchestral pop ballad, 90 BPM...</p>
+                            <p><strong>Tempo:</strong> 2s</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Providers Section -->
+        <section id="providers" class="section">
+            <div class="container">
+                <h2>Provider LLM</h2>
+                <p class="section__subtitle">Ogni provider è selezionato per le sue competenze specifiche nel processo di generazione</p>
+                
+                <div class="providers-grid">
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Google Gemini</h3>
+                            <span class="provider-role">Deep Analysis</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Comprensione multimodale</li>
+                            <li>Analisi del contesto</li>
+                            <li>Accuratezza tecnica</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Mistral AI</h3>
+                            <span class="provider-role">Technical Refinement</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Open source</li>
+                            <li>Multilingua</li>
+                            <li>Inferenza veloce</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>DeepSeek</h3>
+                            <span class="provider-role">Creative Enhancement</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Ragionamento creativo</li>
+                            <li>Costo efficace</li>
+                            <li>Architettura MoE</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Anthropic Claude</h3>
+                            <span class="provider-role">Quality Control</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Focus sulla sicurezza</li>
+                            <li>Validazione affidabile</li>
+                            <li>AI etica</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>OpenAI GPT</h3>
+                            <span class="provider-role">Final Generation</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Scrittura creativa</li>
+                            <li>Ottimizzazione</li>
+                            <li>Versatilità</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="comparison-section">
+                    <h3>Confronto Caratteristiche</h3>
+                    <div class="chart-container">
+                        <img src="https://ppl-ai-code-interpreter-files.s3.amazonaws.com/web/direct-files/fe86f96cae19758e41ecf4596850b67e/97073cbc-bc2d-469c-98b3-10ac3b930d56/d8c78b7a.png" alt="Radar Chart Provider LLM" class="radar-chart">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section -->
+        <section id="demo" class="section">
+            <div class="container">
+                <h2>Demo Interattiva</h2>
+                <p class="section__subtitle">Prova il sistema con esempi reali e vedi come ogni stadio trasforma l'input</p>
+                
+                <div class="demo-container">
+                    <div class="demo-input">
+                        <div class="form-group">
+                            <label class="form-label" for="artist">Artista</label>
+                            <input type="text" id="artist" class="form-control" placeholder="Es. The Beatles">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="song">Canzone</label>
+                            <input type="text" id="song" class="form-control" placeholder="Es. Yesterday">
+                        </div>
+                        <button class="btn btn--primary btn--full-width" id="generatePrompt">Generate Prompt</button>
+                    </div>
+
+                    <div class="examples-section">
+                        <h4>Esempi Precostituiti</h4>
+                        <div class="examples-grid">
+                            <button class="example-btn" data-artist="The Beatles" data-song="Yesterday">The Beatles - Yesterday</button>
+                            <button class="example-btn" data-artist="Daft Punk" data-song="One More Time">Daft Punk - One More Time</button>
+                            <button class="example-btn" data-artist="Radiohead" data-song="Creep">Radiohead - Creep</button>
+                        </div>
+                    </div>
+
+                    <div class="demo-results" id="demoResults">
+                        <div class="results-header">
+                            <h4>Risultati Generazione</h4>
+                            <div class="processing-indicator hidden" id="processingIndicator">
+                                <div class="spinner"></div>
+                                <span>Processing...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stages-processing" id="stagesProcessing"></div>
+                        
+                        <div class="final-result" id="finalResult"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <div class="container">
+                <h2>Architettura Tecnica</h2>
+                <p class="section__subtitle">Architettura completa del sistema con componenti frontend, backend e servizi esterni</p>
+                
+                <div class="architecture-diagram">
+                    <img src="https://ppl-ai-code-interpreter-files.s3.amazonaws.com/web/direct-files/fe86f96cae19758e41ecf4596850b67e/19db8ce0-b2d5-4a07-b1d1-e604833e165d/184aad95.png" alt="Diagramma Architettura Tecnica" class="architecture-image">
+                </div>
+
+                <div class="architecture-components">
+                    <div class="component-card" data-component="frontend">
+                        <h4>Frontend SPA</h4>
+                        <p><strong>Tecnologia:</strong> HTML/CSS/JS</p>
+                        <p>Single page application con interfaccia responsive e interazioni real-time</p>
+                    </div>
+
+                    <div class="component-card" data-component="backend">
+                        <h4>Express Server</h4>
+                        <p><strong>Tecnologia:</strong> Node.js</p>
+                        <p>Backend API server per orchestrazione richieste e gestione pipeline</p>
+                    </div>
+
+                    <div class="component-card" data-component="routes">
+                        <h4>API Routes</h4>
+                        <p><strong>Endpoints:</strong> /health, /lastfm, /generate, /status</p>
+                        <p>Endpoints RESTful per diverse funzionalità del sistema</p>
+                    </div>
+
+                    <div class="component-card" data-component="pipeline">
+                        <h4>LLM Pipeline</h4>
+                        <p><strong>Tecnologia:</strong> Multi-provider</p>
+                        <p>Pipeline orchestrata di 5 stadi con diversi provider LLM specializzati</p>
+                    </div>
+
+                    <div class="component-card" data-component="external">
+                        <h4>External APIs</h4>
+                        <p><strong>Servizi:</strong> Last.fm, Google, Mistral, DeepSeek, Anthropic, OpenAI</p>
+                        <p>Servizi esterni per dati musicali e processing AI</p>
+                    </div>
+                </div>
+
+                <div class="request-lifecycle">
+                    <h3>Request Lifecycle</h3>
+                    <div class="lifecycle-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>Input Reception</h5>
+                                <p>Frontend riceve input utente o dati Last.fm</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>API Request</h5>
+                                <p>Richiesta HTTP al backend Express server</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>Pipeline Processing</h5>
+                                <p>Esecuzione sequenziale dei 5 stadi LLM</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h5>Response Return</h5>
+                                <p>Prompt validato restituito al frontend</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

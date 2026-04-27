@@ -1,0 +1,7 @@
+Stage,Provider,Input,Process,Output
+Input,User/Last.fm,"Artist: The Beatles, Song: Yesterday",Raccolta informazioni base dell'artista e canzone,"Dati grezzi: artista pop/rock britannico, ballata melodica"
+Stage 1,Google Gemini,The Beatles - Yesterday analysis,"Analisi profonda: stile, periodo, strumentazione, caratteristiche melodiche","Analisi dettagliata: ballata del 1965, arrangiamento orchestrale, melodia malinconica"
+Stage 2,Mistral AI,Beatles ballad technical characteristics,"Raffinamento parametri tecnici: tempo, tonalità, progressioni armoniche","Specs tecniche: 90 BPM, tonalità maggiore, progressioni romantiche"
+Stage 3,DeepSeek,Orchestral pop ballad creative elements,"Miglioramento creativo: mood, atmosfera, elementi distintivi","Elementi creativi: strings orchestrali, voce solista, atmosfera nostalgica"
+Stage 4,Anthropic Claude,Pop ballad prompt validation,"Controllo conformità Suno: no nomi artisti, lunghezza, lingua inglese","Validazione: prompt conforme alle restrizioni, linguaggio appropriato"
+Stage 5,OpenAI GPT-4,Validated ballad elements for final prompt,Generazione finale: sintesi ottimizzata per Suno AI,"Melodic orchestral pop ballad, 90 BPM, lush string arrangements, melancholic vocals, romantic chord progressions, nostalgic atmosphere"

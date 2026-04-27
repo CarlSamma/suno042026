@@ -1,0 +1,32 @@
+{
+  "name": "suno-prompt-generator",
+  "version": "1.0.0",
+  "description": "AI-powered prompt generator for Suno AI using multi-LLM pipeline",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup": "node -e \"console.log('📋 Setting up SUNO Prompt Generator...'); if(!require('fs').existsSync('.env')){require('fs').copyFileSync('.env.example','.env');console.log('✅ Created .env file - please add your API keys');}else{console.log('⚠️  .env already exists');} console.log('🔧 Run: npm run health-check');\"",
+    "health-check": "node -e \"require('dotenv').config(); const keys=['LASTFM_API_KEY','GOOGLE_API_KEY','ANTHROPIC_API_KEY','OPENAI_API_KEY']; console.log('🔑 API Key Status:'); keys.forEach(k=>console.log(k+': '+(process.env[k]?'✅':'❌'))); console.log('\\n🚀 Start server: npm run dev');\"",
+    "logs": "node -e \"const fs=require('fs'); const path='./logs/pipeline.log'; if(fs.existsSync(path)){console.log(fs.readFileSync(path,'utf8'));}else{console.log('📝 No log file found. Logs will be created when LOG_TO_FILE=true is set.');}\"",
+    "clear-logs": "node -e \"const fs=require('fs'); const dir='./logs'; if(fs.existsSync(dir)){fs.rmSync(dir,{recursive:true}); console.log('🗑️  Cleared all log files');}else{console.log('📁 No logs directory found');}\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["suno", "ai", "music", "prompt", "generator", "llm"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

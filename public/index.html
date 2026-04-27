@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 SUNO Prompt Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="header__title">🎵 SUNO Prompt Generator</h1>
+            <nav class="nav">
+                <button class="nav__btn nav__btn--active" data-section="generator">Generator</button>
+                <button class="nav__btn" data-section="pipeline">Pipeline</button>
+                <button class="nav__btn" data-section="providers">Providers</button>
+                <button class="nav__btn" data-section="architecture">Architecture</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Generator Section -->
+        <section id="generator" class="section section--active">
+            <div class="container">
+                <div class="hero">
+                    <h2>AI-Powered Music Prompt Creation</h2>
+                    <p class="hero__subtitle">Generate optimized prompts for Suno AI through our advanced 5-stage LLM pipeline</p>
+                </div>
+
+                <div class="generator-container">
+                    <div class="input-methods">
+                        <div class="tabs">
+                            <button class="tab-btn tab-btn--active" data-tab="manual">📝 Manual Input</button>
+                            <button class="tab-btn" data-tab="lastfm">🎵 Last.fm</button>
+                        </div>
+
+                        <!-- Manual Input Tab -->
+                        <div id="manual-tab" class="tab-content tab-content--active">
+                            <form id="manual-form" class="input-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="artist">Artist Name *</label>
+                                    <input type="text" id="artist" name="artist" class="form-control" placeholder="Enter artist name..." required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="title">Song Title (Optional)</label>
+                                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter song title or leave empty for artist style...">
+                                </div>
+
+                                <button type="submit" class="btn btn--primary btn--full-width" id="generate-btn">
+                                    🚀 Generate Prompt
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Last.fm Tab -->
+                        <div id="lastfm-tab" class="tab-content">
+                            <form id="lastfm-form" class="input-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="username">Last.fm Username</label>
+                                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter Last.fm username..." value="nightbeats">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="limit">Number of Tracks</label>
+                                    <select id="limit" name="limit" class="form-control">
+                                        <option value="5">5 tracks</option>
+                                        <option value="10" selected>10 tracks</option>
+                                        <option value="15">15 tracks</option>
+                                        <option value="20">20 tracks</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn--primary btn--full-width" id="load-tracks-btn">
+                                    📡 Load Recent Tracks
+                                </button>
+                            </form>
+
+                            <div id="tracks-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Progress -->
+                    <div id="pipeline-container" class="pipeline-container hidden">
+                        <h3>🔄 Processing Pipeline</h3>
+                        <div class="pipeline-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">Ready to start</span>
+                        </div>
+                        <div id="pipeline-stages" class="pipeline-stages"></div>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="result-container" class="result-container hidden">
+                        <h3>✨ Generated Prompt</h3>
+                        <div id="result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pipeline Section -->
+        <section id="pipeline" class="section">
+            <div class="container">
+                <h2>Pipeline Overview</h2>
+                <p class="section__subtitle">Understand how our 5-stage LLM pipeline transforms your input into optimized Suno AI prompts</p>
+                
+                <div class="pipeline-diagram">
+                    <img src="../suno-analyzer/suno_flow_diagram.png" alt="Pipeline Flow Diagram" class="pipeline-image">
+                </div>
+
+                <div class="pipeline-controls">
+                    <button class="btn btn--primary" id="simulatePipeline">Simulate Pipeline</button>
+                    <div class="pipeline-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="simulateProgressFill"></div>
+                        </div>
+                        <span class="progress-text" id="simulateProgressText">Ready to simulate</span>
+                    </div>
+                </div>
+
+                <div class="stages-grid">
+                    <div class="stage-card" data-stage="1">
+                        <div class="stage-card__header">
+                            <div class="stage-number">1</div>
+                            <div>
+                                <h4>Deep Analysis</h4>
+                                <p class="provider">Google/Mistral</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Task:</strong> Deep analysis of musical characteristics</p>
+                            <p><strong>Input:</strong> Artist + Song information</p>
+                            <p><strong>Output:</strong> Detailed musical analysis</p>
+                            <p><strong>Time:</strong> 2-3s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="2">
+                        <div class="stage-card__header">
+                            <div class="stage-number">2</div>
+                            <div>
+                                <h4>Technical Refinement</h4>
+                                <p class="provider">Mistral</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Task:</strong> Technical parameter refinement</p>
+                            <p><strong>Input:</strong> Analysis data</p>
+                            <p><strong>Output:</strong> BPM, key, technical specs</p>
+                            <p><strong>Time:</strong> 1-2s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="3">
+                        <div class="stage-card__header">
+                            <div class="stage-number">3</div>
+                            <div>
+                                <h4>Creative Enhancement</h4>
+                                <p class="provider">DeepSeek</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Task:</strong> Creative and atmospheric enhancement</p>
+                            <p><strong>Input:</strong> Technical specs + context</p>
+                            <p><strong>Output:</strong> Creative elements, mood, atmosphere</p>
+                            <p><strong>Time:</strong> 2-3s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="4">
+                        <div class="stage-card__header">
+                            <div class="stage-number">4</div>
+                            <div>
+                                <h4>Quality Control</h4>
+                                <p class="provider">Anthropic</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Task:</strong> Suno AI compliance validation</p>
+                            <p><strong>Input:</strong> Enhanced creative prompt</p>
+                            <p><strong>Output:</strong> Validated, compliant prompt</p>
+                            <p><strong>Time:</strong> 1s</p>
+                        </div>
+                    </div>
+
+                    <div class="stage-card" data-stage="5">
+                        <div class="stage-card__header">
+                            <div class="stage-number">5</div>
+                            <div>
+                                <h4>Final Generation</h4>
+                                <p class="provider">OpenAI</p>
+                            </div>
+                        </div>
+                        <div class="stage-card__content">
+                            <p><strong>Task:</strong> Final optimized prompt generation</p>
+                            <p><strong>Input:</strong> Validated prompt elements</p>
+                            <p><strong>Output:</strong> Final Suno-ready prompt</p>
+                            <p><strong>Time:</strong> 2s</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Providers Section -->
+        <section id="providers" class="section">
+            <div class="container">
+                <h2>LLM Providers</h2>
+                <p class="section__subtitle">Each provider is selected for its specific strengths in the generation process</p>
+                
+                <div class="providers-grid">
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Google Gemini</h3>
+                            <span class="provider-role">Deep Analysis</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Multimodal understanding</li>
+                            <li>Contextual analysis</li>
+                            <li>Technical accuracy</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Mistral AI</h3>
+                            <span class="provider-role">Technical Refinement</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Open source</li>
+                            <li>Multilingual</li>
+                            <li>Fast inference</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>DeepSeek</h3>
+                            <span class="provider-role">Creative Enhancement</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Creative reasoning</li>
+                            <li>Cost effective</li>
+                            <li>MoE architecture</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>Anthropic Claude</h3>
+                            <span class="provider-role">Quality Control</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Safety focus</li>
+                            <li>Reliable validation</li>
+                            <li>Ethical AI</li>
+                        </ul>
+                    </div>
+
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <h3>OpenAI GPT</h3>
+                            <span class="provider-role">Final Generation</span>
+                        </div>
+                        <ul class="provider-strengths">
+                            <li>Creative writing</li>
+                            <li>Optimization</li>
+                            <li>Versatility</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="comparison-section">
+                    <h3>Provider Comparison</h3>
+                    <div class="chart-container">
+                        <img src="../suno-analyzer/llm_radar_chart.png" alt="LLM Provider Radar Chart" class="radar-chart">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <div class="container">
+                <h2>System Architecture</h2>
+                <p class="section__subtitle">Complete system architecture with frontend, backend and external services</p>
+                
+                <div class="architecture-diagram">
+                    <img src="../suno-analyzer/architecture_diagram.png" alt="System Architecture Diagram" class="architecture-image">
+                </div>
+
+                <div class="architecture-components">
+                    <div class="component-card" data-component="frontend">
+                        <h4>Frontend SPA</h4>
+                        <p><strong>Technology:</strong> HTML/CSS/JS</p>
+                        <p>Single page application with responsive interface and real-time interactions</p>
+                    </div>
+
+                    <div class="component-card" data-component="backend">
+                        <h4>Express Server</h4>
+                        <p><strong>Technology:</strong> Node.js</p>
+                        <p>Backend API server for request orchestration and pipeline management</p>
+                    </div>
+
+                    <div class="component-card" data-component="routes">
+                        <h4>API Routes</h4>
+                        <p><strong>Endpoints:</strong> /health, /lastfm, /generate</p>
+                        <p>RESTful endpoints for different system functionalities</p>
+                    </div>
+
+                    <div class="component-card" data-component="pipeline">
+                        <h4>LLM Pipeline</h4>
+                        <p><strong>Technology:</strong> Multi-provider</p>
+                        <p>Orchestrated 5-stage pipeline with specialized LLM providers</p>
+                    </div>
+
+                    <div class="component-card" data-component="external">
+                        <h4>External APIs</h4>
+                        <p><strong>Services:</strong> Last.fm, Google, Mistral, DeepSeek, Anthropic, OpenAI</p>
+                        <p>External services for music data and AI processing</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
