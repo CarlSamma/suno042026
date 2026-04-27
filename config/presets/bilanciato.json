@@ -1,0 +1,121 @@
+{
+    "id": "bilanciato",
+    "name": "Bilanciato",
+    "description": "Mix ottimizzato qualità/costo per uso quotidiano. Il miglior rapporto qualità-prezzo.",
+    "created": "2024-01-15T10:30:00Z",
+    "updated": "2024-01-15T10:30:00Z",
+    "tags": [
+        "bilanciato",
+        "giornaliero",
+        "produzione"
+    ],
+    "isBuiltIn": true,
+    "stages": {
+        "1_analysis": {
+            "model": {
+                "id": "anthropic/claude-3-sonnet",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Sonnet"
+            },
+            "parameters": {
+                "temperature": 0.7,
+                "maxTokens": 1500
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 3.00,
+                "currency": "USD"
+            }
+        },
+        "2_refinement": {
+            "model": {
+                "id": "deepseek/deepseek-chat",
+                "provider": "DeepSeek",
+                "displayName": "DeepSeek Chat"
+            },
+            "parameters": {
+                "temperature": 0.5,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "mistralai/mistral-medium",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.02,
+                "currency": "USD"
+            }
+        },
+        "3_enhancement": {
+            "model": {
+                "id": "openai/gpt-4o-mini",
+                "provider": "OpenAI",
+                "displayName": "GPT-4o Mini"
+            },
+            "parameters": {
+                "temperature": 0.8,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "anthropic/claude-3-haiku",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.15,
+                "currency": "USD"
+            }
+        },
+        "4_quality": {
+            "model": {
+                "id": "mistralai/mistral-medium",
+                "provider": "Mistral",
+                "displayName": "Mistral Medium"
+            },
+            "parameters": {
+                "temperature": 0.4,
+                "maxTokens": 1000
+            },
+            "fallback": {
+                "model": "google/gemini-1.5-pro",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.50,
+                "currency": "USD"
+            }
+        },
+        "5_finalization": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.3,
+                "maxTokens": 500
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        }
+    },
+    "estimatedCost": {
+        "perPrompt": 1.42,
+        "per1000Prompts": 1420.00,
+        "currency": "USD",
+        "note": "Best balance of quality and cost for daily use"
+    },
+    "performance": {
+        "avgProcessingTime": "8-12 seconds",
+        "reliability": "98%",
+        "qualityScore": "8.5/10"
+    }
+}

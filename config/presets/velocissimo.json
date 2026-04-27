@@ -1,0 +1,121 @@
+{
+    "id": "velocissimo",
+    "name": "Velocissimo",
+    "description": "Configurazione ultra-veloce per iterazioni rapide. Ideale per brainstorming e test.",
+    "created": "2024-01-15T10:30:00Z",
+    "updated": "2024-01-15T10:30:00Z",
+    "tags": [
+        "veloce",
+        "iterazione",
+        "brainstorm"
+    ],
+    "isBuiltIn": true,
+    "stages": {
+        "1_analysis": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.7,
+                "maxTokens": 1500
+            },
+            "fallback": {
+                "model": "deepseek/deepseek-chat",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        },
+        "2_refinement": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.5,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "deepseek/deepseek-chat",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        },
+        "3_enhancement": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.8,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        },
+        "4_quality": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.4,
+                "maxTokens": 800
+            },
+            "fallback": {
+                "model": "deepseek/deepseek-chat",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        },
+        "5_finalization": {
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.3,
+                "maxTokens": 400
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        }
+    },
+    "estimatedCost": {
+        "perPrompt": 0.25,
+        "per1000Prompts": 250.00,
+        "currency": "USD",
+        "note": "All stages use fastest model available"
+    },
+    "performance": {
+        "avgProcessingTime": "3-5 seconds",
+        "reliability": "95%",
+        "qualityScore": "6.5/10"
+    }
+}

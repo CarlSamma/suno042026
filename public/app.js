@@ -13,7 +13,7 @@ class SunoPromptGenerator {
             {
                 stage: 2,
                 provider: "Mistral",
-                task: "Technical Refinement", 
+                task: "Technical Refinement",
                 description: "Technical parameter refinement"
             },
             {
@@ -35,7 +35,7 @@ class SunoPromptGenerator {
                 description: "Final optimized prompt generation"
             }
         ];
-        
+
         this.init();
     }
 
@@ -45,6 +45,191 @@ class SunoPromptGenerator {
         this.setupForms();
         this.setupPipelineSimulation();
         this.setupStageInteractions();
+        this.loadConfig();
+    }
+
+    // Config Section Methods
+    async loadConfig() {
+        try {
+            const response = await fetch('/api/config');
+            const data = await response.json();
+
+            if (data.success) {
+                this.displayConfig(data);
+                this.displayCostEstimate(data.costEstimate);
+                this.updateOpenRouterStatus(data.openrouterConfigured);
+                await this.loadPresets();
+            }
+        } catch (error) {
+            console.error('Failed to load config:', error);
+            this.showError('Failed to load configuration');
+        }
+    }
+
+    displayConfig(data) {
+        const configDetails = document.getElementById('current-config');
+        if (!configDetails) return;
+
+        const config = data.config;
+        const stages = config.stages;
+
+        let html = '<div class="stages-list">';
+        for (const [key, stage] of Object.entries(stages)) {
+            html += `
+                <div class="stage-config-item">
+                    <div class="stage-config-header">
+                        <strong>${stage.name}</strong>
+                        <span class="model-badge">${stage.model.displayName}</span>
+                    </div>
+                    <div class="stage-config-details">
+                        <span>Temp: ${stage.parameters.temperature}</span>
+                        <span>Max: ${stage.parameters.maxTokens}</span>
+                        <span>Cost: $${(stage.costEstimate.per1000Calls / 1000).toFixed(4)}</span>
+                    </div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        configDetails.innerHTML = html;
+    }
+
+    displayCostEstimate(cost) {
+        const perPrompt = document.getElementById('cost-per-prompt');
+        const per1000 = document.getElementById('cost-per-1000');
+
+        if (perPrompt) perPrompt.textContent = `$${cost.perPrompt.toFixed(2)}`;
+        if (per1000) per1000.textContent = `$${cost.per1000Prompts.toFixed(2)}`;
+    }
+
+    updateOpenRouterStatus(configured) {
+        const statusEl = document.getElementById('openrouter-status');
+        if (!statusEl) return;
+
+        if (configured) {
+            statusEl.innerHTML = '<span class="status-icon">✅</span><span class="status-text">OpenRouter Connected</span>';
+            statusEl.className = 'status-badge status-badge--success';
+        } else {
+            statusEl.innerHTML = '<span class="status-icon">❌</span><span class="status-text">OpenRouter Not Configured</span>';
+            statusEl.className = 'status-badge status-badge--error';
+        }
+    }
+
+    async loadPresets() {
+        try {
+            const response = await fetch('/api/presets');
+            const data = await response.json();
+
+            if (data.success) {
+                this.displayPresets(data.presets);
+            }
+        } catch (error) {
+            console.error('Failed to load presets:', error);
+        }
+    }
+
+    displayPresets(presets) {
+        const container = document.getElementById('presets-container');
+        if (!container) return;
+
+        if (presets.length === 0) {
+            container.innerHTML = '<p>No presets available</p>';
+            return;
+        }
+
+        let html = '';
+        presets.forEach(preset => {
+            const cost = preset.estimatedCost || preset.totalCostEstimate || {};
+            html += `
+                <div class="preset-card">
+                    <div class="preset-header">
+                        <h4>${preset.name}</h4>
+                        ${preset.isBuiltIn ? '<span class="preset-badge">Built-in</span>' : ''}
+                    </div>
+                    <p class="preset-description">${preset.description || ''}</p>
+                    <div class="preset-stats">
+                        <span>Cost: $${cost.perPrompt?.toFixed(2) || '--'}/prompt</span>
+                        <span>Quality: ${preset.performance?.qualityScore || '--'}</span>
+                    </div>
+                    <div class="preset-actions">
+                        <button class="btn btn--small" onclick="app.activatePreset('${preset.id}')">▶️ Activate</button>
+                        ${!preset.isBuiltIn ? `<button class="btn btn--small btn--danger" onclick="app.deletePreset('${preset.id}')">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async activatePreset(presetId) {
+        try {
+            const response = await fetch(`/api/presets/${presetId}/activate`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess(`Preset "${presetId}" activated!`);
+                await this.loadConfig();
+            } else {
+                this.showError(data.message || 'Failed to activate preset');
+            }
+        } catch (error) {
+            console.error('Failed to activate preset:', error);
+            this.showError('Failed to activate preset');
+        }
+    }
+
+    async deletePreset(presetId) {
+        if (!confirm(`Delete preset "${presetId}"?`)) return;
+
+        try {
+            const response = await fetch(`/api/presets/${presetId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess(`Preset "${presetId}" deleted`);
+                await this.loadPresets();
+            } else {
+                this.showError(data.message || 'Failed to delete preset');
+            }
+        } catch (error) {
+            console.error('Failed to delete preset:', error);
+            this.showError('Failed to delete preset');
+        }
+    }
+
+    async resetConfig() {
+        if (!confirm('Reset to default configuration?')) return;
+
+        try {
+            const response = await fetch('/api/config/reset', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess('Configuration reset to defaults');
+                await this.loadConfig();
+            } else {
+                this.showError(data.message || 'Failed to reset config');
+            }
+        } catch (error) {
+            console.error('Failed to reset config:', error);
+            this.showError('Failed to reset configuration');
+        }
+    }
+
+    showSuccess(message) {
+        const existing = document.querySelector('.success-message');
+        if (existing) existing.remove();
+
+        const div = document.createElement('div');
+        div.className = 'success-message';
+        div.textContent = message;
+        document.querySelector('.container').appendChild(div);
+        setTimeout(() => div.remove(), 3000);
     }
 
     setupNavigation() {
@@ -77,7 +262,7 @@ class SunoPromptGenerator {
 
     setupTabs() {
         const tabButtons = document.querySelectorAll('.tab-btn');
-        
+
         tabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const targetTab = e.target.dataset.tab;
@@ -107,15 +292,15 @@ class SunoPromptGenerator {
         // Manual form
         document.getElementById('manual-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const artist = document.getElementById('artist').value.trim();
             const title = document.getElementById('title').value.trim();
-            
+
             if (!artist) {
                 this.showError('Artist name is required');
                 return;
             }
-            
+
             await this.generatePrompt(artist, title || null);
         });
 
@@ -129,29 +314,29 @@ class SunoPromptGenerator {
     async loadLastFmTracks() {
         const username = document.getElementById('username').value.trim();
         const limit = document.getElementById('limit').value;
-        
+
         if (!username) {
             this.showError('Username is required');
             return;
         }
-        
+
         const btn = document.getElementById('load-tracks-btn');
         const container = document.getElementById('tracks-container');
-        
+
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Loading...';
         container.innerHTML = '';
-        
+
         try {
             const response = await fetch(`/api/lastfm/${username}?limit=${limit}`);
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || data.error);
             }
-            
+
             this.displayTracks(data.tracks);
-            
+
         } catch (error) {
             this.showError(`Failed to load tracks: ${error.message}`);
         } finally {
@@ -162,52 +347,52 @@ class SunoPromptGenerator {
 
     displayTracks(tracks) {
         const container = document.getElementById('tracks-container');
-        
+
         if (tracks.length === 0) {
             container.innerHTML = '<div class="error">No recent tracks found</div>';
             return;
         }
-        
+
         const tracksList = document.createElement('div');
         tracksList.className = 'tracks-list';
-        
+
         tracks.forEach(track => {
             const trackElement = document.createElement('div');
             trackElement.className = 'track-item';
             trackElement.onclick = () => this.generatePrompt(track.artist, track.title);
-            
+
             trackElement.innerHTML = `
                 <div class="track-info">
                     <div class="track-title">${this.escapeHtml(track.title)}</div>
                     <div class="track-artist">${this.escapeHtml(track.artist)}</div>
                 </div>
             `;
-            
+
             tracksList.appendChild(trackElement);
         });
-        
+
         container.innerHTML = '<h4>Recent Tracks (click to generate prompt)</h4>';
         container.appendChild(tracksList);
     }
 
     async generatePrompt(artist, title) {
         this.resetUI();
-        
+
         const pipelineContainer = document.getElementById('pipeline-container');
         const stagesDiv = document.getElementById('pipeline-stages');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
-        
+
         // Show pipeline container
         pipelineContainer.classList.remove('hidden');
-        
+
         // Create pipeline stages UI
         this.createPipelineStages(stagesDiv);
-        
+
         // Set initial progress
         progressFill.style.width = '0%';
         progressText.textContent = 'Starting pipeline...';
-        
+
         // Mark first stage as processing and set initial input
         const firstStage = document.getElementById('stage-1');
         const firstInputElement = document.getElementById('input-1');
@@ -215,7 +400,7 @@ class SunoPromptGenerator {
             firstStage.classList.add('pipeline-stage--processing');
             firstInputElement.textContent = `Artist: ${artist}${title ? `\nSong: ${title}` : ' (style analysis)'}`;
         }
-        
+
         try {
             const response = await fetch('/api/generate', {
                 method: 'POST',
@@ -224,50 +409,50 @@ class SunoPromptGenerator {
                 },
                 body: JSON.stringify({ artist, title })
             });
-            
+
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || data.error);
             }
-            
+
             // Update pipeline stages with results
             data.pipeline.stages.forEach((stage, index) => {
                 this.updateStageElement(index + 1, stage);
-                
+
                 // Update progress
                 const progress = ((index + 1) / data.pipeline.stages.length) * 100;
                 progressFill.style.width = `${progress}%`;
                 progressText.textContent = `Completed stage ${index + 1}/5`;
             });
-            
+
             progressText.textContent = 'Pipeline completed successfully!';
-            
+
             // Show results
             this.displayResults(data);
-            
+
         } catch (error) {
             this.showError(`Generation failed: ${error.message}`);
-            
+
             // Mark current processing stage as error
             const activeStage = document.querySelector('.pipeline-stage--processing');
             if (activeStage) {
                 activeStage.classList.remove('pipeline-stage--processing');
                 activeStage.classList.add('pipeline-stage--error');
             }
-            
+
             progressText.textContent = 'Pipeline failed';
         }
     }
 
     createPipelineStages(container) {
         container.innerHTML = '';
-        
+
         this.pipelineData.forEach((stage, index) => {
             const stageElement = document.createElement('div');
             stageElement.className = 'pipeline-stage';
             stageElement.id = `stage-${stage.stage}`;
-            
+
             stageElement.innerHTML = `
                 <div class="stage-header">
                     <div class="stage-number">${stage.stage}</div>
@@ -290,10 +475,10 @@ class SunoPromptGenerator {
                     </div>
                 </div>
             `;
-            
+
             container.appendChild(stageElement);
         });
-        
+
         // Add event listeners for stage action buttons
         this.setupStageActionListeners(container);
     }
@@ -316,47 +501,47 @@ class SunoPromptGenerator {
         const inputElement = document.getElementById(`input-${stageNum}`);
         const outputElement = document.getElementById(`output-${stageNum}`);
         const actionsElement = document.getElementById(`actions-${stageNum}`);
-        
+
         // Update input display
         if (stageData.input) {
-            const inputText = typeof stageData.input === 'string' 
-                ? stageData.input 
+            const inputText = typeof stageData.input === 'string'
+                ? stageData.input
                 : `Artist: ${stageData.input.artist}${stageData.input.title ? `\nSong: ${stageData.input.title}` : ''}`;
             inputElement.textContent = inputText.length > 200 ? inputText.substring(0, 200) + '...' : inputText;
         }
-        
+
         if (stageData.success) {
             stageElement.classList.add('pipeline-stage--completed');
             stageElement.classList.remove('pipeline-stage--processing');
-            
+
             if (stageData.output) {
                 // Store full output for copying/expanding
                 this.stageOutputs[stageNum] = stageData.output;
-                
-                const truncatedOutput = stageData.output.length > 300 
-                    ? stageData.output.substring(0, 300) + '...' 
+
+                const truncatedOutput = stageData.output.length > 300
+                    ? stageData.output.substring(0, 300) + '...'
                     : stageData.output;
                 outputElement.textContent = truncatedOutput;
-                
+
                 // Show action buttons
                 actionsElement.style.display = 'flex';
             }
         } else {
             stageElement.classList.add('pipeline-stage--error');
             stageElement.classList.remove('pipeline-stage--processing');
-            
+
             outputElement.textContent = `❌ Error: ${stageData.error}`;
             actionsElement.style.display = 'none';
         }
-        
+
         // Mark next stage as processing
         const nextStage = document.getElementById(`stage-${stageNum + 1}`);
         if (nextStage && stageData.success) {
             nextStage.classList.add('pipeline-stage--processing');
             const nextInputElement = document.getElementById(`input-${stageNum + 1}`);
             if (nextInputElement && stageData.output) {
-                const inputPreview = stageData.output.length > 150 
-                    ? stageData.output.substring(0, 150) + '...' 
+                const inputPreview = stageData.output.length > 150
+                    ? stageData.output.substring(0, 150) + '...'
                     : stageData.output;
                 nextInputElement.textContent = inputPreview;
             }
@@ -366,10 +551,10 @@ class SunoPromptGenerator {
     displayResults(data) {
         const resultContainer = document.getElementById('result-container');
         const contentDiv = document.getElementById('result-content');
-        
+
         const validation = data.result.validation;
         const isValid = validation.valid;
-        
+
         contentDiv.innerHTML = `
             <div class="result-prompt">
                 ${this.escapeHtml(data.result.prompt)}
@@ -416,9 +601,9 @@ class SunoPromptGenerator {
                 ` : ''}
             </div>
         `;
-        
+
         resultContainer.classList.remove('hidden');
-        
+
         // Add event listener for final prompt copy button
         const copyFinalBtn = document.getElementById('copy-final-prompt');
         if (copyFinalBtn) {
@@ -459,13 +644,13 @@ class SunoPromptGenerator {
         for (let i = 0; i < this.pipelineData.length; i++) {
             const stage = this.pipelineData[i];
             const stageCard = document.querySelector(`[data-stage="${stage.stage}"]`);
-            
+
             // Highlight current stage
             if (stageCard) {
                 stageCard.classList.add('stage-card--active');
             }
             progressText.textContent = `Stage ${stage.stage}: ${stage.task}`;
-            
+
             // Update progress
             const progress = ((i + 1) / this.pipelineData.length) * 100;
             progressFill.style.width = `${progress}%`;
@@ -492,7 +677,7 @@ class SunoPromptGenerator {
 
     setupStageInteractions() {
         const stageCards = document.querySelectorAll('.stage-card');
-        
+
         stageCards.forEach(card => {
             card.addEventListener('click', () => {
                 const stageNum = card.dataset.stage;
@@ -551,17 +736,17 @@ class SunoPromptGenerator {
                 document.execCommand('copy');
                 textArea.remove();
             }
-            
+
             // Visual feedback
             const originalText = buttonElement.innerHTML;
             buttonElement.innerHTML = '✅ Copied!';
             buttonElement.classList.add('success');
-            
+
             setTimeout(() => {
                 buttonElement.innerHTML = originalText;
                 buttonElement.classList.remove('success');
             }, 2000);
-            
+
             return true;
         } catch (err) {
             console.error('Failed to copy text: ', err);
@@ -577,7 +762,7 @@ class SunoPromptGenerator {
 
     copyStageOutput(stageNum, buttonElement) {
         const fullOutput = this.stageOutputs[stageNum];
-        
+
         if (fullOutput) {
             this.copyToClipboard(fullOutput, buttonElement);
         } else {
@@ -593,7 +778,7 @@ class SunoPromptGenerator {
         const fullOutput = this.stageOutputs[stageNum];
         const stageInfo = document.querySelector(`#stage-${stageNum} .stage-title`);
         const providerInfo = document.querySelector(`#stage-${stageNum} .stage-provider`);
-        
+
         if (fullOutput && stageInfo && providerInfo) {
             this.showModal(
                 `Stage ${stageNum}: ${stageInfo.textContent} (${providerInfo.textContent})`,
@@ -625,17 +810,17 @@ class SunoPromptGenerator {
                 </div>
             `;
             document.body.appendChild(modal);
-            
+
             // Close modal when clicking outside
             modal.querySelector('.modal-overlay').addEventListener('click', () => {
                 this.closeModal();
             });
         }
-        
+
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-text').textContent = content;
         modal.style.display = 'flex';
-        
+
         // Add event listener for modal copy button
         const copyModalBtn = document.getElementById('copy-modal-content');
         if (copyModalBtn) {
@@ -671,13 +856,13 @@ class SunoPromptGenerator {
         if (existingError) {
             existingError.remove();
         }
-        
+
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error';
         errorDiv.textContent = message;
-        
+
         document.querySelector('.container').appendChild(errorDiv);
-        
+
         setTimeout(() => errorDiv.remove(), 5000);
     }
 
@@ -699,9 +884,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add keyboard navigation
 document.addEventListener('keydown', (e) => {
-    const sections = ['generator', 'pipeline', 'providers', 'architecture'];
+    const sections = ['generator', 'pipeline', 'config', 'providers', 'architecture'];
     const currentIndex = sections.indexOf(document.querySelector('.nav__btn--active').dataset.section);
-    
+
     if (e.key === 'ArrowLeft' && currentIndex > 0) {
         document.querySelector(`[data-section="${sections[currentIndex - 1]}"]`).click();
     } else if (e.key === 'ArrowRight' && currentIndex < sections.length - 1) {

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎵 SUNO Prompt Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header class="header">
         <div class="container">
@@ -13,6 +15,7 @@
             <nav class="nav">
                 <button class="nav__btn nav__btn--active" data-section="generator">Generator</button>
                 <button class="nav__btn" data-section="pipeline">Pipeline</button>
+                <button class="nav__btn" data-section="config">Config</button>
                 <button class="nav__btn" data-section="providers">Providers</button>
                 <button class="nav__btn" data-section="architecture">Architecture</button>
             </nav>
@@ -25,7 +28,8 @@
             <div class="container">
                 <div class="hero">
                     <h2>AI-Powered Music Prompt Creation</h2>
-                    <p class="hero__subtitle">Generate optimized prompts for Suno AI through our advanced 5-stage LLM pipeline</p>
+                    <p class="hero__subtitle">Generate optimized prompts for Suno AI through our advanced 5-stage LLM
+                        pipeline</p>
                 </div>
 
                 <div class="generator-container">
@@ -40,12 +44,14 @@
                             <form id="manual-form" class="input-form">
                                 <div class="form-group">
                                     <label class="form-label" for="artist">Artist Name *</label>
-                                    <input type="text" id="artist" name="artist" class="form-control" placeholder="Enter artist name..." required>
+                                    <input type="text" id="artist" name="artist" class="form-control"
+                                        placeholder="Enter artist name..." required>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label" for="title">Song Title (Optional)</label>
-                                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter song title or leave empty for artist style...">
+                                    <input type="text" id="title" name="title" class="form-control"
+                                        placeholder="Enter song title or leave empty for artist style...">
                                 </div>
 
                                 <button type="submit" class="btn btn--primary btn--full-width" id="generate-btn">
@@ -59,7 +65,8 @@
                             <form id="lastfm-form" class="input-form">
                                 <div class="form-group">
                                     <label class="form-label" for="username">Last.fm Username</label>
-                                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter Last.fm username..." value="nightbeats">
+                                    <input type="text" id="username" name="username" class="form-control"
+                                        placeholder="Enter Last.fm username..." value="nightbeats">
                                 </div>
 
                                 <div class="form-group">
@@ -106,10 +113,12 @@
         <section id="pipeline" class="section">
             <div class="container">
                 <h2>Pipeline Overview</h2>
-                <p class="section__subtitle">Understand how our 5-stage LLM pipeline transforms your input into optimized Suno AI prompts</p>
-                
+                <p class="section__subtitle">Understand how our 5-stage LLM pipeline transforms your input into
+                    optimized Suno AI prompts</p>
+
                 <div class="pipeline-diagram">
-                    <img src="../suno-analyzer/suno_flow_diagram.png" alt="Pipeline Flow Diagram" class="pipeline-image">
+                    <img src="../suno-analyzer/suno_flow_diagram.png" alt="Pipeline Flow Diagram"
+                        class="pipeline-image">
                 </div>
 
                 <div class="pipeline-controls">
@@ -206,12 +215,62 @@
             </div>
         </section>
 
+        <!-- Config Section -->
+        <section id="config" class="section">
+            <div class="container">
+                <h2>Pipeline Configuration</h2>
+                <p class="section__subtitle">Manage your OpenRouter pipeline settings and presets</p>
+
+                <div class="config-status" id="config-status">
+                    <div class="status-badge" id="openrouter-status">
+                        <span class="status-icon">⏳</span>
+                        <span class="status-text">Checking OpenRouter status...</span>
+                    </div>
+                </div>
+
+                <div class="config-grid">
+                    <div class="config-card">
+                        <h3>Current Configuration</h3>
+                        <div id="current-config" class="config-details">
+                            <p>Loading configuration...</p>
+                        </div>
+                        <button class="btn btn--secondary" id="reload-config-btn">🔄 Reload Config</button>
+                        <button class="btn btn--secondary" id="reset-config-btn">🔙 Reset to Defaults</button>
+                    </div>
+
+                    <div class="config-card">
+                        <h3>Cost Estimate</h3>
+                        <div id="cost-estimate" class="cost-display">
+                            <div class="cost-item">
+                                <span class="cost-label">Per Prompt:</span>
+                                <span class="cost-value" id="cost-per-prompt">--</span>
+                            </div>
+                            <div class="cost-item">
+                                <span class="cost-label">Per 1000:</span>
+                                <span class="cost-value" id="cost-per-1000">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Presets</h3>
+                <div class="presets-grid" id="presets-container">
+                    <p>Loading presets...</p>
+                </div>
+
+                <div class="config-actions">
+                    <button class="btn btn--primary" id="save-current-config-btn">💾 Save Current as Preset</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Providers Section -->
         <section id="providers" class="section">
             <div class="container">
                 <h2>LLM Providers</h2>
-                <p class="section__subtitle">Each provider is selected for its specific strengths in the generation process</p>
-                
+                <p class="section__subtitle">Each provider is selected for its specific strengths in the generation
+                    process</p>
+
                 <div class="providers-grid">
                     <div class="provider-card">
                         <div class="provider-header">
@@ -277,7 +336,8 @@
                 <div class="comparison-section">
                     <h3>Provider Comparison</h3>
                     <div class="chart-container">
-                        <img src="../suno-analyzer/llm_radar_chart.png" alt="LLM Provider Radar Chart" class="radar-chart">
+                        <img src="../suno-analyzer/llm_radar_chart.png" alt="LLM Provider Radar Chart"
+                            class="radar-chart">
                     </div>
                 </div>
             </div>
@@ -287,10 +347,12 @@
         <section id="architecture" class="section">
             <div class="container">
                 <h2>System Architecture</h2>
-                <p class="section__subtitle">Complete system architecture with frontend, backend and external services</p>
-                
+                <p class="section__subtitle">Complete system architecture with frontend, backend and external services
+                </p>
+
                 <div class="architecture-diagram">
-                    <img src="../suno-analyzer/architecture_diagram.png" alt="System Architecture Diagram" class="architecture-image">
+                    <img src="../suno-analyzer/architecture_diagram.png" alt="System Architecture Diagram"
+                        class="architecture-image">
                 </div>
 
                 <div class="architecture-components">
@@ -330,4 +392,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

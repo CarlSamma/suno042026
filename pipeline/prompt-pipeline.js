@@ -1,22 +1,51 @@
-const llmProviderManager = require('../services/llm-providers');
+const openrouterService = require('../services/openrouter-service');
+const configManager = require('../services/config-manager');
 const lastfmService = require('../services/lastfm');
 const logger = require('../utils/logger');
 
+/**
+ * Prompt Pipeline v2.0 - Configurable 5-stage pipeline using OpenRouter
+ * 
+ * Each stage now uses configurable models from the pipeline configuration.
+ * Supports fallback models per stage for reliability.
+ */
 class PromptPipeline {
   constructor() {
-    this.stages = [
-      { name: 'analysis', provider: 'google', fallback: 'mistral', description: 'Deep analysis of artist and track' },
-      { name: 'refinement', provider: 'mistral', fallback: 'google', description: 'Technical refinement and structure' },
-      { name: 'enhancement', provider: 'deepseek', fallback: 'anthropic', description: 'Creative enhancement and musicality' },
-      { name: 'quality', provider: 'anthropic', fallback: 'openai', description: 'Quality control and optimization' },
-      { name: 'finalization', provider: 'openai', fallback: 'anthropic', description: 'Final generation with Suno constraints' }
-    ];
+    this.config = null;
+    this.reloadConfig();
   }
 
+  /**
+   * Reload configuration from file
+   */
+  reloadConfig() {
+    this.config = configManager.getPipelineConfig();
+  }
+
+  /**
+   * Get stage configuration for a given stage number
+   */
+  getStageConfig(stageNum) {
+    const stageKey = `${stageNum}_${this.getStageName(stageNum)}`;
+    return this.config.stages[stageKey];
+  }
+
+  /**
+   * Get stage name from number
+   */
+  getStageName(num) {
+    const names = ['analysis', 'refinement', 'enhancement', 'quality', 'finalization'];
+    return names[num - 1];
+  }
+
+  /**
+   * Process input through all 5 stages
+   */
   async processInput(artist, title = null) {
     const results = {
       input: { artist, title },
       stages: [],
+      config: this.config,
       finalPrompt: null,
       metadata: {
         startTime: new Date().toISOString(),
@@ -29,20 +58,10 @@ class PromptPipeline {
     const startTime = Date.now();
 
     try {
-      // Stage 1: Analysis (Google/Mistral)
-      await this.executeStage(results, 0, artist, title);
-      
-      // Stage 2: Refinement (Mistral)
-      await this.executeStage(results, 1, results.stages[0].output);
-      
-      // Stage 3: Enhancement (DeepSeek)
-      await this.executeStage(results, 2, results.stages[1].output);
-      
-      // Stage 4: Quality Control (Anthropic)
-      await this.executeStage(results, 3, results.stages[2].output);
-      
-      // Stage 5: Final Generation (OpenAI)
-      await this.executeStage(results, 4, results.stages[3].output);
+      // Execute all 5 stages sequentially
+      for (let stageNum = 1; stageNum <= 5; stageNum++) {
+        await this.executeStage(results, stageNum);
+      }
 
       results.finalPrompt = results.stages[4].output;
       results.metadata.processingTime = Date.now() - startTime;
@@ -61,51 +80,76 @@ class PromptPipeline {
     return results;
   }
 
-  async executeStage(results, stageIndex, input, title = null) {
-    const stage = this.stages[stageIndex];
+  /**
+   * Execute a single pipeline stage
+   */
+  async executeStage(results, stageNum) {
+    const stageConfig = this.getStageConfig(stageNum);
+    const stageStartTime = Date.now();
+
     const stageResult = {
-      stage: stageIndex + 1,
-      name: stage.name,
-      provider: stage.provider,
-      description: stage.description,
+      stage: stageNum,
+      name: stageConfig.name,
+      model: stageConfig.model,
+      description: stageConfig.description,
       startTime: new Date().toISOString(),
-      input: typeof input === 'string' ? input.substring(0, 200) + '...' : input,
+      input: null,
       output: null,
       processingTime: 0,
       error: null
     };
 
-    const stageStartTime = Date.now();
+    // Build input for this stage
+    const input = this.buildStageInput(stageNum, results);
+    stageResult.input = typeof input === 'string' ? input.substring(0, 200) + '...' : input;
 
     try {
-      const prompt = await this.buildPromptForStage(stageIndex, input, title);
-      let response;
-      let providerUsed = stage.provider;
+      const prompt = await this.buildPromptForStage(stageNum, input);
 
-      logger.logStageStart(stageIndex + 1, stage.name, stage.provider);
+      logger.logStageStart(stageNum, stageConfig.name, stageConfig.model.id);
+
+      // Build options from config
+      const options = {
+        temperature: stageConfig.parameters.temperature,
+        maxTokens: stageConfig.parameters.maxTokens
+      };
+
+      // Add system prompt for certain stages
+      if (stageConfig.systemPrompt) {
+        options.systemPrompt = stageConfig.systemPrompt;
+      }
+
+      // Determine which model to use (with fallback)
+      let modelUsed = stageConfig.model.id;
+      let fallbackModel = stageConfig.fallback?.enabled ? stageConfig.fallback.model : null;
+
+      let response;
+      let modelError = null;
 
       try {
-        // Try primary provider first
-        response = await llmProviderManager.makeRequest(
-          stage.provider, 
-          prompt, 
-          this.getOptionsForStage(stageIndex)
+        // Try primary model
+        response = await openrouterService.makeRequest(
+          stageConfig.model.id,
+          prompt,
+          options
         );
       } catch (primaryError) {
-        logger.logStageError(stageIndex + 1, stage.name, stage.provider, primaryError.message);
-        
-        // Try fallback provider if available
-        if (stage.fallback) {
-          logger.logFallbackUsed(stageIndex + 1, stage.provider, stage.fallback);
+        modelError = primaryError;
+        logger.logStageError(stageNum, stageConfig.name, stageConfig.model.id, primaryError.message);
+
+        // Try fallback if enabled
+        if (fallbackModel) {
+          logger.log(`Trying fallback model: ${fallbackModel}`);
           try {
-            response = await llmProviderManager.makeRequest(
-              stage.fallback, 
-              prompt, 
-              this.getOptionsForStage(stageIndex)
+            response = await openrouterService.makeRequest(
+              fallbackModel,
+              prompt,
+              options
             );
-            providerUsed = stage.fallback;
+            modelUsed = fallbackModel;
+            modelError = null;
           } catch (fallbackError) {
-            logger.logStageError(stageIndex + 1, stage.name, stage.fallback, fallbackError.message);
+            logger.logStageError(stageNum, stageConfig.name, fallbackModel, fallbackError.message);
             throw primaryError; // Throw original error
           }
         } else {
@@ -113,37 +157,53 @@ class PromptPipeline {
         }
       }
 
-      stageResult.output = response.trim();
-      stageResult.provider = providerUsed; // Update to show which provider was actually used
-      stageResult.processingTime = Date.now() - stageStartTime;
+      stageResult.output = response.content.trim();
+      stageResult.model = { id: modelUsed, ...stageConfig.model };
+      stageResult.processingTime = response.processingTime || (Date.now() - stageStartTime);
       results.metadata.stagesCompleted++;
-      
-      logger.logStageSuccess(stageIndex + 1, stage.name, providerUsed, response.trim(), stageResult.processingTime);
-      
+
+      logger.logStageSuccess(stageNum, stageConfig.name, modelUsed, response.content.trim(), stageResult.processingTime);
+
     } catch (error) {
       stageResult.error = error.message;
       stageResult.processingTime = Date.now() - stageStartTime;
       results.metadata.errors.push({
-        stage: stageIndex + 1,
+        stage: stageNum,
         error: error.message,
         timestamp: new Date().toISOString()
       });
-      throw new Error(`Stage ${stageIndex + 1} (${stage.name}) failed: ${error.message}`);
+      throw new Error(`Stage ${stageNum} (${stageConfig.name}) failed: ${error.message}`);
     }
 
     results.stages.push(stageResult);
   }
 
-  async buildPromptForStage(stageIndex, input, title = null) {
+  /**
+   * Build input for a stage based on previous stage outputs
+   */
+  buildStageInput(stageNum, results) {
+    if (stageNum === 1) {
+      return results.input;
+    }
+
+    // Use output from previous stage
+    const prevStage = results.stages[stageNum - 2];
+    return prevStage ? prevStage.output : '';
+  }
+
+  /**
+   * Build prompt for a specific stage
+   */
+  async buildPromptForStage(stageNum, input) {
     const prompts = {
-      0: this.buildAnalysisPrompt(input, title),
-      1: this.buildRefinementPrompt(input),
-      2: this.buildEnhancementPrompt(input),
-      3: this.buildQualityPrompt(input),
-      4: this.buildFinalizationPrompt(input)
+      1: this.buildAnalysisPrompt(input.artist, input.title),
+      2: this.buildRefinementPrompt(input),
+      3: this.buildEnhancementPrompt(input),
+      4: this.buildQualityPrompt(input),
+      5: this.buildFinalizationPrompt(input)
     };
 
-    return prompts[stageIndex];
+    return prompts[stageNum];
   }
 
   buildAnalysisPrompt(artist, title) {
@@ -248,32 +308,33 @@ Create a prompt that captures the essence of the musical style in the most effec
 Return ONLY the final prompt, nothing else.`;
   }
 
-  getOptionsForStage(stageIndex) {
-    const options = [
-      { temperature: 0.7, maxTokens: 1500 }, // Analysis - balanced
-      { temperature: 0.5, maxTokens: 1200 }, // Refinement - focused
-      { temperature: 0.8, maxTokens: 1200 }, // Enhancement - creative
-      { temperature: 0.4, maxTokens: 1000 }, // Quality - precise
-      { temperature: 0.3, maxTokens: 500 }   // Finalization - constrained
-    ];
-
-    return options[stageIndex] || { temperature: 0.7, maxTokens: 1000 };
-  }
-
+  /**
+   * Validate pipeline readiness
+   */
   async validatePipeline() {
-    const availableProviders = llmProviderManager.getAvailableProviders();
-    const requiredProviders = this.stages.map(stage => stage.provider);
-    
-    const missingProviders = requiredProviders.filter(required => 
-      !availableProviders.some(available => available.name === required)
-    );
+    const configured = openrouterService.isConfigured();
 
     return {
-      ready: missingProviders.length === 0,
-      availableProviders: availableProviders.map(p => p.name),
-      requiredProviders,
-      missingProviders
+      ready: configured,
+      openrouterConfigured: configured,
+      stages: this.config.stages,
+      totalCostPerPrompt: this.config.totalCostEstimate
     };
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig() {
+    return this.config;
+  }
+
+  /**
+   * Update configuration
+   */
+  updateConfig(newConfig) {
+    this.config = configManager.savePipelineConfig(newConfig);
+    return this.config;
   }
 }
 

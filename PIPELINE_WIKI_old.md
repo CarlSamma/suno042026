@@ -70,7 +70,7 @@ The SUNO Prompt Generator is a **Node.js/Express** web application that transfor
 ```
                               ┌─────────────────────────────┐
                               │      USER BROWSER           │
-                              │   (Single Page App)        │
+                              │   (Single Page App)         │
                               └──────────────┬──────────────┘
                                              │
                                              │ HTTP/HTTPS
@@ -80,8 +80,8 @@ The SUNO Prompt Generator is a **Node.js/Express** web application that transfor
                               │       (Port 3000)           │
                               │                             │
                               │  ┌───────────────────────┐  │
-                              │  │    Middleware Stack    │  │
-                              │  │  • helmet (security)   │  │
+                              │  │    Middleware Stack   │  │
+                              │  │  • helmet (security)  │  │
                               │  │  • cors (CORS)        │  │
                               │  │  • morgan (logging)   │  │
                               │  │  • express.json       │  │
@@ -96,7 +96,7 @@ The SUNO Prompt Generator is a **Node.js/Express** web application that transfor
                               │                             │
                               │  ┌───────────────────────┐  │
                               │  │    Service Layer      │  │
-                              │  │  • lastfmService     │  │
+                              │  │  • lastfmService      │  │
                               │  │  • llmProviderManager │  │
                               │  │  • promptValidator    │  │
                               │  │  • logger             │  │
@@ -104,10 +104,10 @@ The SUNO Prompt Generator is a **Node.js/Express** web application that transfor
                               │                             │
                               │  ┌───────────────────────┐  │
                               │  │   Pipeline Layer      │  │
-                              │  │  ┌─────────────────┐   │  │
-                              │  │  │PromptPipeline  │   │  │
-                              │  │  │ (5 stages)     │   │  │
-                              │  │  └─────────────────┘   │  │
+                              │  │  ┌─────────────────┐  │  │
+                              │  │  │PromptPipeline   │  │  │
+                              │  │  │ (5 stages)      │  │  │
+                              │  │  └─────────────────┘  │  │
                               │  └───────────────────────┘  │
                               └──────────────┬──────────────┘
                                              │
@@ -115,15 +115,15 @@ The SUNO Prompt Generator is a **Node.js/Express** web application that transfor
                     │                        │                        │
                     ▼                        ▼                        ▼
         ┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
-        │   EXTERNAL APIs   │    │   LLM PROVIDERS   │    │   FILE SYSTEM    │
+        │   EXTERNAL APIs   │    │   LLM PROVIDERS   │    │   FILE SYSTEM     │
         │                   │    │                   │    │                   │
         │  ┌─────────────┐  │    │  ┌─────────────┐  │    │  ┌─────────────┐  │
-        │  │  Last.fm   │  │    │  │   Google    │  │    │  │   /logs     │  │
-        │  │  API       │  │    │  │   Gemini    │  │    │  │ pipeline.log│  │
+        │  │  Last.fm    │  │    │  │   Google    │  │    │  │   /logs     │  │
+        │  │  API        │  │    │  │   Gemini    │  │    │  │ pipeline.log│  │
         │  └─────────────┘  │    │  └─────────────┘  │    │  └─────────────┘  │
         │                   │    │  ┌─────────────┐  │    │                   │
-        │                   │    │  │   Mistral  │  │    │                   │
-        │                   │    │  │   AI       │  │    │                   │
+        │                   │    │  │   Mistral   │  │    │                   │
+        │                   │    │  │   AI        │  │    │                   │
         │                   │    │  └─────────────┘  │    │                   │
         │                   │    │  ┌─────────────┐  │    │                   │
         │                   │    │  │  DeepSeek   │  │    │                   │
@@ -157,7 +157,7 @@ The heart of the system is a **5-stage sequential pipeline** where each stage is
   │     USER      │        │    STAGE 1    │        │    STAGE 2    │        
   │    INPUT      │        │   ANALYSIS    │        │  REFINEMENT   │        
   │               │        │               │        │               │        
-  │ • Artist Name │   ──▶  │  Google or    │   ──▶  │    Mistral    │        
+  │ • Artist Name │   ──▶ │  Google or    │   ──▶  │    Mistral    │        
   │ • Song Title  │        │    Mistral    │        │    Medium     │        
   │   (optional)  │        │  Gemini 1.5   │        │               │        
   │               │        │     Flash     │        │               │        
@@ -198,7 +198,7 @@ The heart of the system is a **5-stage sequential pipeline** where each stage is
   │  FINAL OUTPUT │                                                             
   │  Suno AI      │                                                             
   │  Valid Prompt │                                                             
-  │  ≤400 chars   │                                                             
+  │  ≤600 chars   │                                                             
   │               │                                                             
   └───────────────┘                                                             
 ```

@@ -1,0 +1,121 @@
+{
+    "id": "massima-qualita",
+    "name": "Massima Qualità",
+    "description": "Configurazione per risultati professionali di altissima qualità. Per produzione finale.",
+    "created": "2024-01-15T10:30:00Z",
+    "updated": "2024-01-15T10:30:00Z",
+    "tags": [
+        "qualità",
+        "professionale",
+        "produzione"
+    ],
+    "isBuiltIn": true,
+    "stages": {
+        "1_analysis": {
+            "model": {
+                "id": "anthropic/claude-3-opus",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Opus"
+            },
+            "parameters": {
+                "temperature": 0.7,
+                "maxTokens": 2000
+            },
+            "fallback": {
+                "model": "openai/gpt-4o",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 15.00,
+                "currency": "USD"
+            }
+        },
+        "2_refinement": {
+            "model": {
+                "id": "anthropic/claude-3-sonnet",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Sonnet"
+            },
+            "parameters": {
+                "temperature": 0.5,
+                "maxTokens": 1500
+            },
+            "fallback": {
+                "model": "openai/gpt-4o",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 3.00,
+                "currency": "USD"
+            }
+        },
+        "3_enhancement": {
+            "model": {
+                "id": "openai/gpt-4o",
+                "provider": "OpenAI",
+                "displayName": "GPT-4o"
+            },
+            "parameters": {
+                "temperature": 0.8,
+                "maxTokens": 1500
+            },
+            "fallback": {
+                "model": "anthropic/claude-3-sonnet",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 3.00,
+                "currency": "USD"
+            }
+        },
+        "4_quality": {
+            "model": {
+                "id": "anthropic/claude-3-opus",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Opus"
+            },
+            "parameters": {
+                "temperature": 0.4,
+                "maxTokens": 1000
+            },
+            "fallback": {
+                "model": "openai/gpt-4o",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 15.00,
+                "currency": "USD"
+            }
+        },
+        "5_finalization": {
+            "model": {
+                "id": "openai/gpt-4o",
+                "provider": "OpenAI",
+                "displayName": "GPT-4o"
+            },
+            "parameters": {
+                "temperature": 0.3,
+                "maxTokens": 500
+            },
+            "fallback": {
+                "model": "anthropic/claude-3-sonnet",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 3.00,
+                "currency": "USD"
+            }
+        }
+    },
+    "estimatedCost": {
+        "perPrompt": 39.00,
+        "per1000Prompts": 39000.00,
+        "currency": "USD",
+        "note": "Premium quality - use only for final production"
+    },
+    "performance": {
+        "avgProcessingTime": "15-25 seconds",
+        "reliability": "99%",
+        "qualityScore": "10/10"
+    }
+}

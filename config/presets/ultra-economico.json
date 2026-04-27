@@ -1,0 +1,102 @@
+{
+    "id": "ultra-economico",
+    "name": "Ultra Economico",
+    "description": "Configurazione ottimizzata per costi minimi con buona qualità. Ideale per test e sviluppo.",
+    "created": "2024-01-15T10:30:00Z",
+    "updated": "2024-01-15T10:30:00Z",
+    "tags": [
+        "economico",
+        "budget",
+        "veloce",
+        "test"
+    ],
+    "isBuiltIn": true,
+    "stages": {
+        "1_analysis": {
+            "model": {
+                "id": "anthropic/claude-3-haiku",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Haiku"
+            },
+            "parameters": {
+                "temperature": 0.7,
+                "maxTokens": 1500
+            },
+            "costEstimate": {
+                "per1000Calls": 0.10,
+                "currency": "USD"
+            }
+        },
+        "2_refinement": {
+            "model": {
+                "id": "deepseek/deepseek-chat",
+                "provider": "DeepSeek",
+                "displayName": "DeepSeek Chat"
+            },
+            "parameters": {
+                "temperature": 0.5,
+                "maxTokens": 1000
+            },
+            "costEstimate": {
+                "per1000Calls": 0.02,
+                "currency": "USD"
+            }
+        },
+        "3_enhancement": {
+            "model": {
+                "id": "anthropic/claude-3-haiku",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Haiku"
+            },
+            "parameters": {
+                "temperature": 0.8,
+                "maxTokens": 1200
+            },
+            "costEstimate": {
+                "per1000Calls": 0.10,
+                "currency": "USD"
+            }
+        },
+        "4_quality": {
+            "model": {
+                "id": "deepseek/deepseek-chat",
+                "provider": "DeepSeek",
+                "displayName": "DeepSeek Chat"
+            },
+            "parameters": {
+                "temperature": 0.4,
+                "maxTokens": 800
+            },
+            "costEstimate": {
+                "per1000Calls": 0.02,
+                "currency": "USD"
+            }
+        },
+        "5_finalization": {
+            "model": {
+                "id": "deepseek/deepseek-chat",
+                "provider": "DeepSeek",
+                "displayName": "DeepSeek Chat"
+            },
+            "parameters": {
+                "temperature": 0.3,
+                "maxTokens": 500
+            },
+            "costEstimate": {
+                "per1000Calls": 0.02,
+                "currency": "USD"
+            }
+        }
+    },
+    "estimatedCost": {
+        "perPrompt": 0.26,
+        "per1000Prompts": 260.00,
+        "currency": "USD",
+        "note": "Using Haiku + DeepSeek reduces cost significantly"
+    },
+    "performance": {
+        "avgProcessingTime": "5-8 seconds",
+        "reliability": "95%",
+        "qualityScore": "7/10"
+    }
+}

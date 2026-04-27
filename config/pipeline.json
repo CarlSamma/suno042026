@@ -1,0 +1,119 @@
+{
+    "version": "2.0",
+    "name": "Default Balanced Configuration",
+    "description": "Factory default configuration with balanced quality/cost",
+    "lastModified": "2024-01-15T10:30:00Z",
+    "active": true,
+    "stages": {
+        "1_analysis": {
+            "name": "Deep Analysis",
+            "description": "Analisi profonda delle caratteristiche musicali",
+            "model": {
+                "id": "anthropic/claude-3-haiku",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Haiku"
+            },
+            "parameters": {
+                "temperature": 0.7,
+                "maxTokens": 1500
+            },
+            "fallback": {
+                "model": "google/gemini-1.5-flash",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.10,
+                "currency": "USD"
+            }
+        },
+        "2_refinement": {
+            "name": "Technical Refinement",
+            "description": "Raffinamento parametri tecnici",
+            "model": {
+                "id": "openai/gpt-4o-mini",
+                "provider": "OpenAI",
+                "displayName": "GPT-4o Mini"
+            },
+            "parameters": {
+                "temperature": 0.5,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.02,
+                "currency": "USD"
+            }
+        },
+        "3_enhancement": {
+            "name": "Creative Enhancement",
+            "description": "Miglioramento creativo e atmosferico",
+            "model": {
+                "id": "openai/gpt-4o-mini",
+                "provider": "OpenAI",
+                "displayName": "GPT-4o Mini"
+            },
+            "parameters": {
+                "temperature": 0.8,
+                "maxTokens": 1200
+            },
+            "fallback": {
+                "model": "anthropic/claude-3-haiku",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.15,
+                "currency": "USD"
+            }
+        },
+        "4_quality": {
+            "name": "Quality Control",
+            "description": "Validazione conformità Suno AI",
+            "model": {
+                "id": "anthropic/claude-3-haiku",
+                "provider": "Anthropic",
+                "displayName": "Claude 3 Haiku"
+            },
+            "parameters": {
+                "temperature": 0.4,
+                "maxTokens": 1000
+            },
+            "fallback": {
+                "model": "google/gemini-1.5-flash",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.50,
+                "currency": "USD"
+            }
+        },
+        "5_finalization": {
+            "name": "Finalization",
+            "description": "Generazione prompt finale Suno-compliant",
+            "model": {
+                "id": "google/gemini-1.5-flash",
+                "provider": "Google",
+                "displayName": "Gemini 1.5 Flash"
+            },
+            "parameters": {
+                "temperature": 0.3,
+                "maxTokens": 500
+            },
+            "fallback": {
+                "model": "openai/gpt-4o-mini",
+                "enabled": true
+            },
+            "costEstimate": {
+                "per1000Calls": 0.05,
+                "currency": "USD"
+            }
+        }
+    },
+    "totalCostEstimate": {
+        "perPrompt": 0.82,
+        "per1000Prompts": 820.00,
+        "currency": "USD"
+    }
+}

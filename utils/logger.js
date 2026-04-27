@@ -84,6 +84,16 @@ class Logger {
     console.log(`📡 ${message}`);
     this.writeToFile('info', message, { endpoint, method, status, responseTime });
   }
+
+  /**
+   * Generic log method for any message
+   */
+  log(message, level = 'info', data = null) {
+    const levels = ['debug', 'info', 'warn', 'error'];
+    const logLevel = levels.includes(level) ? level : 'info';
+    console.log(`📝 ${message}`);
+    this.writeToFile(logLevel, message, data);
+  }
 }
 
 module.exports = new Logger();

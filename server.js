@@ -28,10 +28,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 const healthRoutes = require('./routes/health');
 const lastfmRoutes = require('./routes/lastfm');
 const generateRoutes = require('./routes/generate');
+const configRoutes = require('./routes/config');
+const presetsRoutes = require('./routes/presets');
 
 app.use('/api/health', healthRoutes);
 app.use('/api/lastfm', lastfmRoutes);
 app.use('/api/generate', generateRoutes);
+app.use('/api/config', configRoutes);
+app.use('/api/presets', presetsRoutes);
 
 // Serve main application
 app.get('/', (req, res) => {
@@ -41,7 +45,7 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
   });
@@ -56,7 +60,7 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 SUNO Prompt Generator server running on port ${PORT}`);
   console.log(`📱 Access the application at: http://localhost:${PORT}`);
-  
+
   // Log available API keys (without revealing them)
   const apiKeys = {
     'Last.fm': !!process.env.LASTFM_API_KEY,
@@ -67,7 +71,7 @@ app.listen(PORT, () => {
     'OpenAI': !!process.env.OPENAI_API_KEY,
     'Perplexity': !!process.env.PERPLEXITY_API_KEY
   };
-  
+
   console.log('🔑 API Keys configured:', Object.entries(apiKeys)
     .map(([service, available]) => `${service}: ${available ? '✅' : '❌'}`)
     .join(', '));
